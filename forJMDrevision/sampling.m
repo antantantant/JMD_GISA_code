@@ -1,34 +1,45 @@
-function [W,w0] = sampling(s,d,W0,Xf,dX,dXID,pairs,C)
+function [W,w0,C,weights] = sampling(s,d,W0,A)
     
-    if isempty(pairs)
+    if isempty(A)
         W = mvnrnd(zeros(1,d),eye(d),s); % generate candidates
         w0 = zeros(1,d);
+        C = 1;
+        weights = 1;
     else
-        theta = 1; % logistic penalty
-        A = dX(dXID(sub2ind(size(dXID),pairs(:,1),pairs(:,2))),:);
-        A = bsxfun(@times,A,sign(pairs(:,2)-pairs(:,1)));
-        b = zeros(size(pairs,1),1);
-            
-        model = train(ones(size(A,1),1),...
-                            sparse(theta*A), sprintf('-s 0 -e 1e-6 -q -c %f', C));
-        w0 = model.w;
-%         w00 = ((A'*A+1/C*eye(size(A,2)))\A'*ones(size(A,1),1))';
-%             [w0,C] = crossvalidation(sparse(A),ones(size(A,1),1));
-%         W = myMetropolisHasting(w0,s,s,A,C,theta);
-
-        As = bsxfun(@times, theta*A, sqrt(exp(theta*A*w0'))./(1+exp(theta*A*w0')));
-        Sigma_inv = (eye(d)/C+(As'*As));
-        W = W0*(inv(chol(Sigma_inv)))';
-        W = bsxfun(@plus, W, w0);
+        [w0, C, weights] = crossvalidation(sparse(A),ones(size(A,1),1)); 
         
-%             W = mvnrnd(w0,inv(Sigma),s);
-% %             W = feasible(W,A,b);
-% %             if isempty(W)
-% %                 stop = 1;
-% %             end
+        step = length(C);
+        W = zeros(size(W0,1)*step,size(W0,2));
+        for i = 1:step
+            As = bsxfun(@times, A, sqrt(exp(A*w0(i,:)'))./(1+exp(A*w0(i,:)')));
+            As(isnan(As))=0;
+            Sigma_inv = (eye(d)/C(i)+(As'*As));
+%             Sigma_inv = (eye(d)/C(i)+(A'*A));
+            cond(A'*A)
+            W_ = W0*(inv(chol(Sigma_inv)))';
+            W_ = bsxfun(@plus, W_, w0(i,:));  
+            W((i-1)*size(W0,1)+(1:size(W0,1)),:) = W_;        
+        end
+        
+%         step = 10;
+%         W = zeros(size(W0,1)*step,size(W0,2));
+%         W_base = zeros(size(W0,1),size(W0,2),length(C));
+%         for i = 1:length(C)
+%             As = bsxfun(@times, A, sqrt(exp(A*w0(i,:)'))./(1+exp(A*w0(i,:)')));
+%             As(isnan(As))=0;
+%             Sigma_inv = (eye(d)/C(i)+(As'*As));
+%             W_ = W0*(inv(chol(Sigma_inv)))';
+%             W_ = bsxfun(@plus, W_, w0(i,:));  
+%             W_base(:,:,i) = W_;        
+%         end
+%         
+%         if length(C)==2
+%             for i = 1:step
+%                 a = (step-i)/(step-1);
+%                 W((i-1)*size(W0,1)+(1:size(W0,1)),:) = a*W_base(:,:,1)+(1-a)*W_base(:,:,2);         
+%             end
+%         else
+%             W = W_base(:,:,1);
+%         end
 
     end
-        
-    function WC = feasible(WC,A,b)
-        feasible = sum(bsxfun(@lt, A*WC', b),1)==0;
-        WC = WC(feasible,:);
