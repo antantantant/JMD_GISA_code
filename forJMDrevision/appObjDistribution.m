@@ -28,4 +28,5 @@ function [f,W,I,unique_I,w0,C,weights] = appObjDistribution(s,d,W0,X,c,A,competi
     %     f(keep) = sum(bsxfun(@eq, obj, max(obj,[],2))/s)';
         
     unique_I = unique(I);
+    unique_I(unique_I>length(c))=[];
     

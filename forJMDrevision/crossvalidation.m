@@ -52,7 +52,7 @@ function [w, best_C, weights] = crossvalidation(X,y)
     
     
     folds = 10;
-    C = [1e-4,1e-3,1e-2,1e-1,1,1e1,1e2,1e3,1e4]; % search for C
+    C = [1e-1,1,5,1e1,5e1,1e2,5e2,1e3,5e3,1e4]; % search for C
     
     
     %# grid search, and cross-validation

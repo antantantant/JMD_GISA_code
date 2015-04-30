@@ -1,4 +1,4 @@
-matlabpool open;
+% matlabpool open;
 % load('..\basedata.mat');
 addpath('..\..\Tools\liblinear\matlab');
 
@@ -8,6 +8,7 @@ MAX_ITER = 1000;
 prob_set = cell(TEST,1);
 pairs_set = cell(TEST,1);
 partworths_set = cell(TEST,1);
+CC_set = cell(TEST,1);
 s = 1e4;
 inq = 100;
 W0 = mvnrnd(zeros(1,d),eye(length(w)),s);
@@ -19,7 +20,7 @@ Dw = eye(30)*sigma; % randomness in user choices
 nt = size(Xf,1); % number of testing object
 % nt = 100;
 
-theta = 10;
+theta = 1;
 wtrue = w*theta;
 wtrue(1:5) = wtrue(1:5)-wtrue(5);
 wtrue(6:10) = wtrue(6:10)-wtrue(10);
@@ -28,6 +29,8 @@ wtrue(16:20) = wtrue(16:20)-wtrue(20);
 wtrue(21:25) = wtrue(21:25)-wtrue(25);
 wtrue(26:30) = wtrue(26:30)-wtrue(30);
 
+num_competitor = 1;
+
 parfor test = 1:TEST
     rng(test);
     fprintf('\n%%%%%%%% test number %d %%%%%%%%%%',test);
@@ -35,13 +38,13 @@ parfor test = 1:TEST
     % Calculate true distribution under sigma
     Wtrue = mvnrnd(wtrue,Dw,s);
     util = (Wtrue*Xf(1:nt,:)');
-    num_competitior = 10;
-    competitors = randperm(size(Xf,1),num_competitior);
+
+    competitors = randperm(size(Xf,1),num_competitor);
     util_competitor = util(:,competitors);
     util_competitor_all = kron(util_competitor,ones(1,size(Xf,1)));
-    util_all = repmat(util,1,num_competitior);
+    util_all = repmat(util,1,num_competitor);
     exp_delta_util = exp(-util_all+util_competitor_all);
-    exp_sum_delta_util = exp_delta_util*repmat(eye(size(Xf,1)),num_competitior,1);
+    exp_sum_delta_util = exp_delta_util*repmat(eye(size(Xf,1)),num_competitor,1);
     obj_app = bsxfun(@plus,-log(exp_sum_delta_util),log(c(1:nt,:)'));
     best = bsxfun(@eq, obj_app, max(obj_app,[],2));
     best = best.*util;
@@ -49,6 +52,7 @@ parfor test = 1:TEST
     best = bsxfun(@eq, best, max(best,[],2));
     target_dist = sum(best/s)';
     [~,target_best] = max(target_dist);
+%     target_best = 1701;
     
     
     queryID = dXID;
@@ -57,6 +61,10 @@ parfor test = 1:TEST
     probability_obj_set = zeros(nt,MAX_ITER);
     partworths = zeros(d,MAX_ITER);
     pairs = zeros(MAX_ITER,2);
+    minCC = zeros(MAX_ITER,1);
+% %     probability_obj_set = prob_set{test};
+%     partworths = partworths_set{test};
+%     pairs = pairs_set{test};
     nq = 1;
     nquery = sum(sum(queryID>0));
         
@@ -74,56 +82,58 @@ parfor test = 1:TEST
         
         
         [~,guess] = max(probability_obj);
-        fprintf('iter: %d, truth: %d (%f), guess: %d, point guess: %d, corr: %0.2f \n',...
+        fprintf(['iter: %d, truth: %d (%f), guess: %d, point guess: %d,',...
+            'corr: %0.2f, norm: %0.2f, CC: %0.3f \n'],...
             nq, target_best, probability_obj(target_best), guess,...
-            find(obj_app==max(obj_app),1), corr(w0',wtrue(XID)'));
+            find(obj_app==max(obj_app),1), corr(w0',wtrue(XID)'),...
+            norm(w0-wtrue(XID)), minCC(max(nq-1,1)));
         
         if nq>1
-%             [~,sort_obj] = sort(probability_obj,'descend');
-%             sort_obj_nonzero = sort_obj(1:sum(probability_obj>0));
-%             a = [];
-%             aid = [];
-%             count = 1;
-%             
-%             for i = 1:(length(sort_obj_nonzero)-1)
-%                 if count > inq
-%                     break;
-%                 end
-%                 for j = (i+1):length(sort_obj_nonzero)
-%                     if count > inq
-%                         break;
-%                     end
-%                     ii = min([sort_obj_nonzero(i),sort_obj_nonzero(j)]);
-%                     II = max([sort_obj_nonzero(i),sort_obj_nonzero(j)]);
-%                     if queryID(ii,II)>0
-%                         a = [a;[ii,II]];
-%                         aid = [aid;queryID(ii,II)];
-%                         count = count + 1;
-%                     end
-%                 end
-%             end
-%             
-%             if count <= inq
-%                 sort_obj_zero = setdiff((1:nx)',sort_obj_nonzero);
-%                 sort_obj_zero = sort_obj_zero(randperm(length(sort_obj_zero)));
-%                 for i = 1:length(sort_obj_nonzero)
-%                     if count > inq
-%                         break;
-%                     end
-%                     for j = 1:length(sort_obj_zero)
-%                         if count > inq
-%                             break;
-%                         end
-%                         ii = min([sort_obj_nonzero(i),sort_obj_zero(j)]);
-%                         II = max([sort_obj_nonzero(i),sort_obj_zero(j)]);
-%                         if queryID(ii,II)>0
-%                             a = [a;[ii,II]];
-%                             aid = [aid;queryID(ii,II)];
-%                             count = count + 1;
-%                         end
-%                     end
-%                 end
-%             end
+            [~,sort_obj] = sort(probability_obj,'descend');
+            sort_obj_nonzero = sort_obj(1:sum(probability_obj>0));
+            a = [];
+            aid1 = [];
+            count = 1;
+            
+            for i = 1:(length(sort_obj_nonzero)-1)
+                if count > inq/2
+                    break;
+                end
+                for j = (i+1):length(sort_obj_nonzero)
+                    if count > inq/2
+                        break;
+                    end
+                    ii = min([sort_obj_nonzero(i),sort_obj_nonzero(j)]);
+                    II = max([sort_obj_nonzero(i),sort_obj_nonzero(j)]);
+                    if queryID(ii,II)>0
+                        a = [a;[ii,II]];
+                        aid1 = [aid1;queryID(ii,II)];
+                        count = count + 1;
+                    end
+                end
+            end
+            
+            if count <= inq/2
+                sort_obj_zero = setdiff((1:nx)',sort_obj_nonzero);
+                sort_obj_zero = sort_obj_zero(randperm(length(sort_obj_zero)));
+                for i = 1:length(sort_obj_nonzero)
+                    if count > inq/2
+                        break;
+                    end
+                    for j = 1:length(sort_obj_zero)
+                        if count > inq/2
+                            break;
+                        end
+                        ii = min([sort_obj_nonzero(i),sort_obj_zero(j)]);
+                        II = max([sort_obj_nonzero(i),sort_obj_zero(j)]);
+                        if queryID(ii,II)>0
+                            a = [a;[ii,II]];
+                            aid1 = [aid1;queryID(ii,II)];
+                            count = count + 1;
+                        end
+                    end
+                end
+            end
             
             unsampled = unique(queryID);
             unsampled(unsampled==0)=[];
@@ -139,8 +149,8 @@ parfor test = 1:TEST
 %             aid = unsampled(s2==max(s2));
 %             aid = aid(randperm(length(aid),min([length(aid),inq])));
             [~,sort_id] = sort(s2,'descend');
-            aid = unsampled(sort_id(1:inq));
-            
+            aid = unsampled(sort_id(1:inq/2));
+            aid = [aid;aid1];
 
             actual_inq = length(aid);
             if actual_inq>0
@@ -164,7 +174,8 @@ parfor test = 1:TEST
                 rho(probability_query_pos>0.5) = probability_query_pos(probability_query_pos>0.5);
                 rho(probability_query_pos<=0.5) = 1-probability_query_pos(probability_query_pos<=0.5);
                 CC = rho.*log2(rho)-sum(probability_obj*ones(1,actual_inq).*rho_k.*log2(rho_k))';
-
+                minCC(nq)=min(CC);    
+                
                 query_id = aid(find(CC==min(CC),1));
                 [options(1),options(2)] = find(queryID==query_id);
 
@@ -183,7 +194,7 @@ parfor test = 1:TEST
                     end
 
                     probability_obj_set(:,nq) = probability_obj;
-                    partworths(:,nq) = w0;
+                    partworths(XID,nq) = w0';
                     nq = nq+1;
                     nquery = nquery - 1;
                 end
@@ -204,6 +215,8 @@ parfor test = 1:TEST
             end
             
             queryID(min(options),max(options))=0;
+            probability_obj_set(:,nq) = probability_obj;
+            partworths(XID,nq) = w0';
             nq = nq+1;
             nquery = nquery - 1;
         end
@@ -212,6 +225,8 @@ parfor test = 1:TEST
     prob_set{test} = probability_obj_set;
     pairs_set{test} = pairs;
     partworths_set{test} = partworths;
+    CC_set{test} = minCC;
 end
 save(['profit_s',num2str(s),'_inq',num2str(inq),...
-    '_n',num2str(MAX_ITER),'_0424.mat'],'prob_set','pairs_set','partworths_set','-v7.3');
+    '_n',num2str(MAX_ITER),'_comp',num2str(num_competitor),...
+    '_theta',num2str(theta),'_0430.mat'],'prob_set','pairs_set','partworths_set','-v7.3');

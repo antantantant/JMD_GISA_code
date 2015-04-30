@@ -2,83 +2,60 @@
 % load('..\basedata.mat');
 % addpath('..\..\Tools\liblinear\matlab');
 % DX = dXID + dXID';
+TEST = length(prob_set);
+target_best_set = 1701*ones(TEST,1); % for the current test, all have 1701 as the target
 
 %% Plots for GGBS
-% load('profit_s100000_inq100_C1_0210.mat');
-% load('profit_s100000_inq100_C10_n1000_0225.mat');
-TEST = length(prob_set);
-prob_ggbs = zeros(TEST,1001);
-best_ggbs = zeros(TEST,1001);
-corr_ggbs = zeros(TEST,1001);
-dist_ggbs = zeros(TEST,1001);
+load('profit_s10000_inq100_n1000_comp1_0428.mat');
+MAX_ITER = 1000;
+prob_ggbs = zeros(TEST,MAX_ITER);
+best_ggbs = zeros(TEST,MAX_ITER);
+corr_ggbs = zeros(TEST,MAX_ITER);
+dist_ggbs = zeros(TEST,MAX_ITER);
+
 for i = 1:TEST
     prob = prob_set{i};
-    prob_ggbs(i,:) = prob(1704,1:1001);
-    best_ggbs(i,:) = prob(1704,1:1001)==max(prob(:,1:1001));
-    
-%     pairs = pairs_set{i};
-%     for j = 1:999
-%         A = dX(DX(sub2ind(size(DX),pairs(1:j,1),pairs(1:j,2))),:);
-%         A = bsxfun(@times,A,sign(pairs(1:j,2)-pairs(1:j,1)));
-%         model = train(ones(size(A,1),1),...
-%                 sparse(A),'-s 0 -c 0.1 -e 1e-6 -q');
-%         corr_ggbs(i,j) = corr(w',(model.w)');
-%         dist_ggbs(i,j) = norm(w'-(model.w)');
+    prob_ggbs(i,:) = prob(target_best_set(i),1:MAX_ITER);
+    best_ggbs(i,:) = prob(target_best_set(i),1:MAX_ITER)==max(prob(:,1:MAX_ITER));
+    corr_ggbs(i,:) = corr(partworths_set{i},wtrue')';
+    dist_ggbs(i,:) = sqrt(sum(bsxfun(@minus,partworths_set{i},wtrue').^2,1));
+%     
+%     pp = partworths_set{i};
+%     for j = 2:1001
+%         if j == 220
+%             wait = 1;
+%         end
+%         if (2*norm(pp(:,j))<norm(pp(:,j-1)))
+%             pp(:,j) =  pp(:,j)/pp(1,j)*pp(1,j-1);
+%             dist_ggbs(i,j) = dist_ggbs(i,j-1);
+%             corr_ggbs(i,j) = corr_ggbs(i,j-1);
+%         end
 %     end
-%     corr_ggbs(i,1000) = corr_ggbs(i,999);
-%     dist_ggbs(i,1000) = dist_ggbs(i,999);
-    corr_ggbs(i,:) = corr(partworths_set{i},w')';
-    
-    dist_ggbs(i,:) = sqrt(sum(bsxfun(@minus,partworths_set{i},w').^2,1));
-    
-    pp = partworths_set{i};
-    for j = 2:1001
-        if j == 220
-            wait = 1;
-        end
-        if (2*norm(pp(:,j))<norm(pp(:,j-1)))
-            pp(:,j) =  pp(:,j)/pp(1,j)*pp(1,j-1);
-            dist_ggbs(i,j) = dist_ggbs(i,j-1);
-            corr_ggbs(i,j) = corr_ggbs(i,j-1);
-        end
-    end
 end
-% 
+
 % figure; hold on;
 % plot(prob_ggbs');
-% 
 % plot(mean(prob_ggbs,1),'r');
-
+% plot(mean(best_ggbs))
 
 %% Plots for Toubia's method
-load('toubia_s100000_C01_n1000_0218.mat');
-prob_toubia = zeros(TEST,1001);
-corr_toubia = zeros(TEST,1001);
-dist_toubia = zeros(TEST,1001);
-best_toubia = zeros(TEST,1001);
+load('toubia_s10000_n1000_comp1_0429.mat');
+MAX_ITER = 1000;
+prob_toubia = zeros(TEST,MAX_ITER);
+corr_toubia = zeros(TEST,MAX_ITER);
+dist_toubia = zeros(TEST,MAX_ITER);
+best_toubia = zeros(TEST,MAX_ITER);
 for i = 1:TEST
     prob = prob_set{i};
-%     pairs = pairs_set{i};
-    prob_toubia(i,:) = prob(1704,1:1001);
-    best_toubia(i,:) = prob(1704,1:1001)==max(prob(:,1:1001));
-%     for j = 1:length(pairs)
-%         A = dX(DX(sub2ind(size(DX),pairs(1:j,1),pairs(1:j,2))),:);
-%         A = bsxfun(@times,A,sign(pairs(1:j,2)-pairs(1:j,1)));
-%         model = train(ones(size(A,1),1),...
-%                 sparse(A),'-s 0 -c 3.49e-4 -e 1e-6 -q');
-%         corr_toubia(i,j) = corr(w',(model.w)');
-%     end
-%     if length(pairs)<10001
-%         corr_toubia(i,length(pairs):end) = corr_toubia(i,length(pairs));
-%     end
+    prob_toubia(i,:) = prob(target_best_set(i),1:MAX_ITER);
+    best_toubia(i,:) = prob(target_best_set(i),1:MAX_ITER)==max(prob(:,1:MAX_ITER));
     partworths = partworths_set{i};
-    partworths = partworths(:,1:1001);
-    corr_toubia(i,:) = corr(partworths,w')';
-    dist_toubia(i,:) = sqrt(sum(bsxfun(@minus,partworths,w').^2,1));
+    corr_toubia(i,:) = corr(partworths,wtrue')';
+    dist_toubia(i,:) = sqrt(sum(bsxfun(@minus,partworths,wtrue').^2,1));
 end
 
 figure;
-subplot(3,1,1);
+subplot(4,1,1);
 hold on;
 % plot(mean(best_ggbs,1),'-r','LineWidth',1);
 plot(mean(prob_ggbs,1),'r','LineWidth',2);
@@ -89,7 +66,18 @@ set(gca,'FontSize',16,'Fontname','Timesnewroman');
 ylhand = get(gca,'ylabel');
 set(ylhand,'string','\pi^{(k^*)}_a','fontsize',20,'Fontname','Timesnewroman');
 
-subplot(2,1,2);
+subplot(4,1,2);
+hold on;
+plot(mean(best_ggbs,1),'r','LineWidth',2);
+plot(mean(best_toubia,1),'b','LineWidth',2);
+xlim([0 1000]);
+set(gca,'fontSize',16,'fontname','timesnewroman');
+ylhand = get(gca,'ylabel');
+set(ylhand,'string','best','fontsize',16,'fontname','timesnewroman');
+xlhand = get(gca,'xlabel');
+set(xlhand,'string','number of queries','fontsize',16,'fontname','timesnewroman');
+
+subplot(4,1,3);
 hold on;
 plot(mean(corr_ggbs,1),'r','LineWidth',2);
 plot(mean(corr_toubia,1),'b','LineWidth',2);
@@ -99,16 +87,15 @@ ylhand = get(gca,'ylabel');
 set(ylhand,'string','corr({\bf w}^*,{\bf w}_0)','fontsize',16,'fontname','timesnewroman');
 xlhand = get(gca,'xlabel');
 set(xlhand,'string','number of queries','fontsize',16,'fontname','timesnewroman');
-savefig('C10q100p.fig');
 
+subplot(4,1,4);
+hold on;
+plot(mean(dist_ggbs,1),'r','LineWidth',2);
+plot(mean(dist_toubia,1),'b','LineWidth',2);
+ylabel('||{\bf w}^*-{\bf w}_0||');
+xlabel('number of queries');
 
-% subplot(3,1,3);
-% hold on;
-% plot(mean(dist_ggbs,1),'r','LineWidth',2);
-% plot(mean(dist_toubia,1),'b','LineWidth',2);
-% ylabel('||{\bf w}^*-{\bf w}_0||');
-% xlabel('number of queries');
-
+% savefig('C10q100p.fig');
 
 
 %% long term

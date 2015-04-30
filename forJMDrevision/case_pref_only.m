@@ -1,15 +1,15 @@
-% matlabpool open;
-% load('..\basedata.mat');
+matlabpool open;
+load('..\basedata.mat');
 addpath('..\..\Tools\liblinear\matlab');
 
 c = Xf(:,26:30)*price'-cv; %price - cost
 TEST = 12;
-MAX_ITER = 500;
+MAX_ITER = 1000;
 prob_set = cell(TEST,1);
 pairs_set = cell(TEST,1);
 partworths_set = cell(TEST,1);
 s = 1e4;
-inq = 10;
+inq = 100;
 W0 = mvnrnd(zeros(1,d),eye(length(w)),s);
 XID = 1:30; 
 XID(5:5:30)=[];
@@ -19,7 +19,7 @@ Dw = eye(30)*sigma; % randomness in user choices
 nt = size(Xf,1); % number of testing object
 % nt = 100;
 
-theta = 10;
+theta = 1;
 wtrue = w*theta;
 wtrue(1:5) = wtrue(1:5)-wtrue(5);
 wtrue(6:10) = wtrue(6:10)-wtrue(10);
@@ -28,6 +28,8 @@ wtrue(16:20) = wtrue(16:20)-wtrue(20);
 wtrue(21:25) = wtrue(21:25)-wtrue(25);
 wtrue(26:30) = wtrue(26:30)-wtrue(30);
 
+num_competitor = 1;
+
 parfor test = 1:TEST
     rng(test);
     fprintf('\n%%%%%%%% test number %d %%%%%%%%%%',test);
@@ -35,13 +37,12 @@ parfor test = 1:TEST
     % Calculate true distribution under sigma
     Wtrue = mvnrnd(wtrue,Dw,s);
     util = (Wtrue*Xf(1:nt,:)');
-    num_competitior = 10;
-    competitors = randperm(size(Xf,1),num_competitior);
+    competitors = randperm(size(Xf,1),num_competitor);
     util_competitor = util(:,competitors);
     util_competitor_all = kron(util_competitor,ones(1,size(Xf,1)));
-    util_all = repmat(util,1,num_competitior);
+    util_all = repmat(util,1,num_competitor);
     exp_delta_util = exp(-util_all+util_competitor_all);
-    exp_sum_delta_util = exp_delta_util*repmat(eye(size(Xf,1)),num_competitior,1);
+    exp_sum_delta_util = exp_delta_util*repmat(eye(size(Xf,1)),num_competitor,1);
     obj_app = bsxfun(@plus,-log(exp_sum_delta_util),log(c(1:nt,:)'));
     best = bsxfun(@eq, obj_app, max(obj_app,[],2));
     best = best.*util;
@@ -49,7 +50,7 @@ parfor test = 1:TEST
     best = bsxfun(@eq, best, max(best,[],2));
     target_dist = sum(best/s)';
     [~,target_best] = max(target_dist);
-    
+%     target_best = 1701;
     
     
     queryID = dXID;
@@ -58,6 +59,9 @@ parfor test = 1:TEST
     probability_obj_set = zeros(nt,MAX_ITER);
     partworths = zeros(d,MAX_ITER);
     pairs = zeros(MAX_ITER,2);
+%     probability_obj_set = [prob_set{test},zeros(2455,500)];
+%     partworths = [partworths_set{test},zeros(30,500)];
+%     pairs = [pairs_set{test};zeros(500,2)];
     nq = 1;
     nquery = sum(sum(queryID>0));
     queryList = ones(nquery,1);
@@ -142,5 +146,6 @@ parfor test = 1:TEST
     pairs_set{test} = pairs;
     partworths_set{test} = partworths;
 end
-save(['toubia_s',num2str(s),'_n',num2str(MAX_ITER),'_0424.mat'],...
+save(['toubia_s',num2str(s),'_n',num2str(MAX_ITER),...
+    '_comp',num2str(num_competitor),'_theta',num2str(theta),'_0430.mat'],...
     'prob_set','pairs_set','partworths_set','-v7.3');
