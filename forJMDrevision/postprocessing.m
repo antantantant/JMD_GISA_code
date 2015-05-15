@@ -2,7 +2,7 @@
 % load('..\basedata.mat');
 % addpath('..\..\Tools\liblinear\matlab');
 % DX = dXID + dXID';
-TEST = length(prob_set);
+TEST = 12;
 target_best_set = 1701*ones(TEST,1); % for the current test, all have 1701 as the target
 
 %% Plots for GGBS
@@ -39,7 +39,7 @@ end
 % plot(mean(best_ggbs))
 
 %% Plots for Toubia's method
-load('toubia_s10000_n1000_comp1_0429.mat');
+load('toubia_s10000_n1000_comp1_theta1000_0430.mat');
 MAX_ITER = 1000;
 prob_toubia = zeros(TEST,MAX_ITER);
 corr_toubia = zeros(TEST,MAX_ITER);

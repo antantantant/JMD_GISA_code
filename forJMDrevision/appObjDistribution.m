@@ -7,7 +7,7 @@ function [f,W,I,unique_I,w0,C,weights] = appObjDistribution(s,d,W0,X,c,A,competi
     util_competitor_all = kron(util_competitor,ones(1,size(X,1)));
     util_all = repmat(util,1,num_competitior);
     exp_delta_util = exp(-util_all+util_competitor_all);
-    exp_sum_delta_util = exp_delta_util*repmat(eye(size(X,1)),num_competitior,1);
+    exp_sum_delta_util = exp_delta_util*repmat(eye(size(X,1)),num_competitior,1)+1;
     obj_app = bsxfun(@plus,-log(exp_sum_delta_util),log(c'));
     
 %     obj_app = bsxfun(@plus,-log(1+exp(-util)),log(c'));

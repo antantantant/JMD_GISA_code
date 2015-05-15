@@ -1,5 +1,5 @@
 % matlabpool open;
-% load('..\basedata.mat');
+load('..\basedata.mat');
 addpath('..\..\Tools\liblinear\matlab');
 
 c = Xf(:,26:30)*price'-cv; %price - cost
@@ -8,6 +8,8 @@ MAX_ITER = 1000;
 prob_set = cell(TEST,1);
 pairs_set = cell(TEST,1);
 partworths_set = cell(TEST,1);
+target_best_set = zeros(TEST,1);
+strategy_set = cell(TEST,1); % 1: determinant, 2: most probable
 CC_set = cell(TEST,1);
 s = 1e4;
 inq = 100;
@@ -18,7 +20,7 @@ sigma = 1e-6;
 Dw = eye(30)*sigma; % randomness in user choices
 
 nt = size(Xf,1); % number of testing object
-% nt = 100;
+% nt = 1000;
 
 theta = 1;
 wtrue = w*theta;
@@ -39,12 +41,12 @@ parfor test = 1:TEST
     Wtrue = mvnrnd(wtrue,Dw,s);
     util = (Wtrue*Xf(1:nt,:)');
 
-    competitors = randperm(size(Xf,1),num_competitor);
+    competitors = randperm(nt,num_competitor);
     util_competitor = util(:,competitors);
-    util_competitor_all = kron(util_competitor,ones(1,size(Xf,1)));
+    util_competitor_all = kron(util_competitor,ones(1,nt));
     util_all = repmat(util,1,num_competitor);
     exp_delta_util = exp(-util_all+util_competitor_all);
-    exp_sum_delta_util = exp_delta_util*repmat(eye(size(Xf,1)),num_competitor,1);
+    exp_sum_delta_util = exp_delta_util*repmat(eye(nt),num_competitor,1)+1;
     obj_app = bsxfun(@plus,-log(exp_sum_delta_util),log(c(1:nt,:)'));
     best = bsxfun(@eq, obj_app, max(obj_app,[],2));
     best = best.*util;
@@ -53,7 +55,7 @@ parfor test = 1:TEST
     target_dist = sum(best/s)';
     [~,target_best] = max(target_dist);
 %     target_best = 1701;
-    
+    target_best_set(test) = target_best;
     
     queryID = dXID;
     nx = size(Xf,1);
@@ -62,6 +64,7 @@ parfor test = 1:TEST
     partworths = zeros(d,MAX_ITER);
     pairs = zeros(MAX_ITER,2);
     minCC = zeros(MAX_ITER,1);
+    strategy = zeros(MAX_ITER,1);
 % %     probability_obj_set = prob_set{test};
 %     partworths = partworths_set{test};
 %     pairs = pairs_set{test};
@@ -96,19 +99,15 @@ parfor test = 1:TEST
             count = 1;
             
             for i = 1:(length(sort_obj_nonzero)-1)
-                if count > inq/2
-                    break;
-                end
                 for j = (i+1):length(sort_obj_nonzero)
-                    if count > inq/2
-                        break;
-                    end
-                    ii = min([sort_obj_nonzero(i),sort_obj_nonzero(j)]);
-                    II = max([sort_obj_nonzero(i),sort_obj_nonzero(j)]);
-                    if queryID(ii,II)>0
-                        a = [a;[ii,II]];
-                        aid1 = [aid1;queryID(ii,II)];
-                        count = count + 1;
+                    if count <= inq/2
+                        ii = min([sort_obj_nonzero(i),sort_obj_nonzero(j)]);
+                        II = max([sort_obj_nonzero(i),sort_obj_nonzero(j)]);
+                        if queryID(ii,II)>0
+                            a = [a;[ii,II]];
+                            aid1 = [aid1;queryID(ii,II)];
+                            count = count + 1;
+                        end
                     end
                 end
             end
@@ -117,19 +116,15 @@ parfor test = 1:TEST
                 sort_obj_zero = setdiff((1:nx)',sort_obj_nonzero);
                 sort_obj_zero = sort_obj_zero(randperm(length(sort_obj_zero)));
                 for i = 1:length(sort_obj_nonzero)
-                    if count > inq/2
-                        break;
-                    end
                     for j = 1:length(sort_obj_zero)
-                        if count > inq/2
-                            break;
-                        end
-                        ii = min([sort_obj_nonzero(i),sort_obj_zero(j)]);
-                        II = max([sort_obj_nonzero(i),sort_obj_zero(j)]);
-                        if queryID(ii,II)>0
-                            a = [a;[ii,II]];
-                            aid1 = [aid1;queryID(ii,II)];
-                            count = count + 1;
+                        if count <= inq/2
+                            ii = min([sort_obj_nonzero(i),sort_obj_zero(j)]);
+                            II = max([sort_obj_nonzero(i),sort_obj_zero(j)]);
+                            if queryID(ii,II)>0
+                                a = [a;[ii,II]];
+                                aid1 = [aid1;queryID(ii,II)];
+                                count = count + 1;
+                            end
                         end
                     end
                 end
@@ -174,7 +169,12 @@ parfor test = 1:TEST
                 rho(probability_query_pos>0.5) = probability_query_pos(probability_query_pos>0.5);
                 rho(probability_query_pos<=0.5) = 1-probability_query_pos(probability_query_pos<=0.5);
                 CC = rho.*log2(rho)-sum(probability_obj*ones(1,actual_inq).*rho_k.*log2(rho_k))';
-                minCC(nq)=min(CC);    
+                [minCC(nq), minCCid] = min(CC);    
+                if minCCid(1)>inq/2
+                    strategy(nq) = 1;
+                else
+                    strategy(nq) = 2;
+                end
                 
                 query_id = aid(find(CC==min(CC),1));
                 [options(1),options(2)] = find(queryID==query_id);
@@ -226,7 +226,9 @@ parfor test = 1:TEST
     pairs_set{test} = pairs;
     partworths_set{test} = partworths;
     CC_set{test} = minCC;
+    strategy_set{test} = strategy;
 end
 save(['profit_s',num2str(s),'_inq',num2str(inq),...
     '_n',num2str(MAX_ITER),'_comp',num2str(num_competitor),...
-    '_theta',num2str(theta),'_0430.mat'],'prob_set','pairs_set','partworths_set','-v7.3');
+    '_theta',num2str(theta),'_0514.mat'],'prob_set','pairs_set',...
+    'partworths_set','target_best_set','strategy_set','-v7.3');
