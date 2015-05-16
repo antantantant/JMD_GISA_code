@@ -12,7 +12,7 @@ target_best_set = zeros(TEST,1);
 strategy_set = cell(TEST,1); % 1: determinant, 2: most probable
 CC_set = cell(TEST,1);
 s = 1e4;
-inq = 100;
+inq = 2;
 W0 = mvnrnd(zeros(1,d),eye(length(w)),s);
 XID = 1:30; 
 XID(5:5:30)=[];
@@ -22,7 +22,7 @@ Dw = eye(30)*sigma; % randomness in user choices
 nt = size(Xf,1); % number of testing object
 % nt = 1000;
 
-theta = 1;
+theta = 100;
 wtrue = w*theta;
 wtrue(1:5) = wtrue(1:5)-wtrue(5);
 wtrue(6:10) = wtrue(6:10)-wtrue(10);
@@ -129,24 +129,25 @@ parfor test = 1:TEST
                     end
                 end
             end
+            aid = aid1; % test the query strategy with the best probablity
             
-            unsampled = unique(queryID);
-            unsampled(unsampled==0)=[];
-            As = bsxfun(@times, A, sqrt(exp(A*w0'))./(1+exp(A*w0')));
-            As(isnan(As))=0;
-            B = (eye(size(A,2))-(w0'*w0)/(w0*w0'))*(eye(size(A,2))/C+(As'*As));
-%             B = (eye(size(A,2))-(w0'*w0)/(w0*w0'))*(A'*A+1/C*eye(size(A,2)));
-            [V,D] = eig((B+B')/2);
-            e = diag(D);
-            v = V(:,e==min(e(e>1e-12)));
-            v = v(:,1);
-            s2 = abs((dX(unsampled,XID)*v)./sqrt(sum(dX(unsampled,XID).^2,2)));
-%             aid = unsampled(s2==max(s2));
-%             aid = aid(randperm(length(aid),min([length(aid),inq])));
-            [~,sort_id] = sort(s2,'descend');
-            aid = unsampled(sort_id(1:inq/2));
-            aid = [aid;aid1];
-
+%             unsampled = unique(queryID);
+%             unsampled(unsampled==0)=[];
+%             As = bsxfun(@times, A, sqrt(exp(A*w0'))./(1+exp(A*w0')));
+%             As(isnan(As))=0;
+%             B = (eye(size(A,2))-(w0'*w0)/(w0*w0'))*(eye(size(A,2))/C+(As'*As));
+% %             B = (eye(size(A,2))-(w0'*w0)/(w0*w0'))*(A'*A+1/C*eye(size(A,2)));
+%             [V,D] = eig((B+B')/2);
+%             e = diag(D);
+%             v = V(:,e==min(e(e>1e-12)));
+%             v = v(:,1);
+%             s2 = abs((dX(unsampled,XID)*v)./sqrt(sum(dX(unsampled,XID).^2,2)));
+% %             aid = unsampled(s2==max(s2));
+% %             aid = aid(randperm(length(aid),min([length(aid),inq])));
+%             [~,sort_id] = sort(s2,'descend');
+%             aid = unsampled(sort_id(1:inq/2));
+%             aid = [aid;aid1];
+            
             actual_inq = length(aid);
             if actual_inq>0
                 temp_set = zeros(nt,actual_inq);
@@ -230,5 +231,5 @@ parfor test = 1:TEST
 end
 save(['profit_s',num2str(s),'_inq',num2str(inq),...
     '_n',num2str(MAX_ITER),'_comp',num2str(num_competitor),...
-    '_theta',num2str(theta),'_0514.mat'],'prob_set','pairs_set',...
+    '_theta',num2str(theta),'_bestonly_0515.mat'],'prob_set','pairs_set',...
     'partworths_set','target_best_set','strategy_set','-v7.3');
