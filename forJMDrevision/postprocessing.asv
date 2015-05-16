@@ -5,7 +5,7 @@ DX = dXID + dXID';
 TEST = 12;
 MAX_ITER = 1000;
 inq = 100;
-theta = 1;
+theta = 100;
 s = 1e4;
 
 c = Xf(:,26:30)*price'-cv; %price - cost
@@ -29,7 +29,7 @@ num_competitor = 1;
 %% Plots for GGBS
 load(['profit_s',num2str(s),'_inq',num2str(inq),...
     '_n',num2str(MAX_ITER),'_comp',num2str(num_competitor),...
-    '_theta',num2str(theta),'_0514.mat']);
+    '_theta',num2str(theta),'_0430.mat']);
 prob_ggbs = zeros(TEST,MAX_ITER);
 best_ggbs = zeros(TEST,MAX_ITER);
 corr_ggbs = zeros(TEST,MAX_ITER);
@@ -44,8 +44,7 @@ for i = 1:TEST
 end
 
 %% Plots for Toubia's method
-load(['toubia_s',num2str(s),'_n',num2str(MAX_ITER),...
-    '_comp',num2str(num_competitor),'_theta',num2str(theta),'_0513.mat']);
+load('toubia_s10000_n1000_comp1_theta100_0513.mat');
 prob_toubia = zeros(TEST,MAX_ITER);
 corr_toubia = zeros(TEST,MAX_ITER);
 dist_toubia = zeros(TEST,MAX_ITER);
@@ -67,13 +66,12 @@ shadedErrorBar(1:MAX_ITER,prob_toubia,{@mean,@std},'b',2);
 % plot(mean(prob_ggbs,1),'r','LineWidth',2);
 % plot(mean(prob_toubia,1),'b','LineWidth',2);
 xlim([1 1000]);
+axis([1])
 set(gca,'FontSize',16,'Fontname','Timesnewroman');
 ylhand = get(gca,'ylabel');
 set(ylhand,'string','\pi^{(k^*)}_a','fontsize',20,'Fontname','Timesnewroman');
-xlhand = get(gca,'xlabel');
-set(xlhand,'string','number of queries','fontsize',16,'fontname','timesnewroman');
-plot([1,MAX_ITER],[1,1],'.-k','LineWidth',2);
-plot([1,MAX_ITER],[0,0],'.-k','LineWidth',2);
+plot([1,MAX_ITER],[1,1],'.k','LineWidth',2);
+plot([1,MAX_ITER],[0,0],'.-','LineWidth',2);
 
 subplot(4,1,2);
 hold on;
@@ -87,8 +85,8 @@ ylhand = get(gca,'ylabel');
 set(ylhand,'string','best','fontsize',16,'fontname','timesnewroman');
 xlhand = get(gca,'xlabel');
 set(xlhand,'string','number of queries','fontsize',16,'fontname','timesnewroman');
-plot([1,MAX_ITER],[1,1],'.-k','LineWidth',2);
-plot([1,MAX_ITER],[0,0],'.-k','LineWidth',2);
+plot([1,MAX_ITER],[1,1],'.k','LineWidth',2);
+plot([1,MAX_ITER],[0,0],'.-','LineWidth',2);
 
 subplot(4,1,3);
 hold on;
@@ -102,8 +100,8 @@ ylhand = get(gca,'ylabel');
 set(ylhand,'string','corr({\bf w}^*,{\bf w}_0)','fontsize',16,'fontname','timesnewroman');
 xlhand = get(gca,'xlabel');
 set(xlhand,'string','number of queries','fontsize',16,'fontname','timesnewroman');
-plot([1,MAX_ITER],[1,1],'.-k','LineWidth',2);
-plot([1,MAX_ITER],[0,0],'.-k','LineWidth',2);
+plot([1,MAX_ITER],[1,1],'.k','LineWidth',2);
+plot([1,MAX_ITER],[0,0],'.-','LineWidth',2);
 
 subplot(4,1,4);
 hold on;
@@ -119,12 +117,6 @@ xlhand = get(gca,'xlabel');
 set(xlhand,'string','number of queries','fontsize',16,'fontname','timesnewroman');
 
 % savefig('C10q100p.fig');
-
-%% percentage of correct answer
-% test for theta = 1, 10, 100, the percentages of answering each question
-% correctly
-
-
 
 
 %% long term
