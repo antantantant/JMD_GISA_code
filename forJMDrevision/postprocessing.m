@@ -5,7 +5,7 @@ DX = dXID + dXID';
 TEST = 12;
 MAX_ITER = 1000;
 inq = 100;
-theta = 1;
+theta = 100;
 s = 1e4;
 
 c = Xf(:,26:30)*price'-cv; %price - cost
@@ -120,13 +120,225 @@ set(xlhand,'string','number of queries','fontsize',16,'fontname','timesnewroman'
 
 % savefig('C10q100p.fig');
 
-%% percentage of correct answer
-% test for theta = 1, 10, 100, the percentages of answering each question
-% correctly
+%% compare with different number of candidate queries
+load('profit_s10000_inq100_n1000_comp1_theta10_0514.mat');
+prob_ggbs_theta100 = zeros(TEST,MAX_ITER);
+best_ggbs_theta100 = zeros(TEST,MAX_ITER);
+corr_ggbs_theta100 = zeros(TEST,MAX_ITER);
+dist_ggbs_theta100 = zeros(TEST,MAX_ITER);
+
+for i = 1:TEST
+    prob = prob_set{i};
+    prob_ggbs_theta100(i,:) = prob(target_best_set(i),1:MAX_ITER);
+    best_ggbs_theta100(i,:) = prob(target_best_set(i),1:MAX_ITER)==max(prob(:,1:MAX_ITER));
+    corr_ggbs_theta100(i,:) = corr(partworths_set{i},wtrue')';
+    dist_ggbs_theta100(i,:) = sqrt(sum(bsxfun(@minus,partworths_set{i},wtrue').^2,1));
+end
+
+load('profit_s10000_inq10_n1000_comp1_theta10_0515.mat');
+prob_ggbs_theta10 = zeros(TEST,MAX_ITER);
+best_ggbs_theta10 = zeros(TEST,MAX_ITER);
+corr_ggbs_theta10 = zeros(TEST,MAX_ITER);
+dist_ggbs_theta10 = zeros(TEST,MAX_ITER);
+
+for i = 1:TEST
+    prob = prob_set{i};
+    prob_ggbs_theta10(i,:) = prob(target_best_set(i),1:MAX_ITER);
+    best_ggbs_theta10(i,:) = prob(target_best_set(i),1:MAX_ITER)==max(prob(:,1:MAX_ITER));
+    corr_ggbs_theta10(i,:) = corr(partworths_set{i},wtrue')';
+    dist_ggbs_theta10(i,:) = sqrt(sum(bsxfun(@minus,partworths_set{i},wtrue').^2,1));
+end
+
+load('profit_s10000_inq2_n1000_comp1_theta10_bestonly_0515.mat');
+prob_ggbs_theta1 = zeros(TEST,MAX_ITER);
+best_ggbs_theta1 = zeros(TEST,MAX_ITER);
+corr_ggbs_theta1 = zeros(TEST,MAX_ITER);
+dist_ggbs_theta1 = zeros(TEST,MAX_ITER);
+
+for i = 1:TEST
+    prob = prob_set{i};
+    prob_ggbs_theta1(i,:) = prob(target_best_set(i),1:MAX_ITER);
+    best_ggbs_theta1(i,:) = prob(target_best_set(i),1:MAX_ITER)==max(prob(:,1:MAX_ITER));
+    corr_ggbs_theta1(i,:) = corr(partworths_set{i},wtrue')';
+    dist_ggbs_theta1(i,:) = sqrt(sum(bsxfun(@minus,partworths_set{i},wtrue').^2,1));
+end
+
+figure;
+subplot(4,1,1);
+hold on;
+shadedErrorBar(1:MAX_ITER,prob_ggbs_theta100,{@mean,@std},'r',2);
+shadedErrorBar(1:MAX_ITER,prob_ggbs_theta10,{@mean,@std},'b',2);
+shadedErrorBar(1:MAX_ITER,prob_ggbs_theta1,{@mean,@std},'k',2);
+% plot(mean(prob_ggbs,1),'r','LineWidth',2);
+% plot(mean(prob_toubia,1),'b','LineWidth',2);
+xlim([1 1000]);
+set(gca,'FontSize',16,'Fontname','Timesnewroman');
+ylhand = get(gca,'ylabel');
+set(ylhand,'string','\pi^{(k^*)}_a','fontsize',20,'Fontname','Timesnewroman');
+xlhand = get(gca,'xlabel');
+set(xlhand,'string','number of queries','fontsize',16,'fontname','timesnewroman');
+plot([1,MAX_ITER],[1,1],'.-k','LineWidth',2);
+plot([1,MAX_ITER],[0,0],'.-k','LineWidth',2);
+
+subplot(4,1,2);
+hold on;
+shadedErrorBar(1:MAX_ITER,best_ggbs_theta100,{@mean,@std},'r',2);
+shadedErrorBar(1:MAX_ITER,best_ggbs_theta10,{@mean,@std},'b',2);
+shadedErrorBar(1:MAX_ITER,best_ggbs_theta1,{@mean,@std},'k',2);
+% plot(mean(best_ggbs,1),'r','LineWidth',2);
+% plot(mean(best_toubia,1),'b','LineWidth',2);
+xlim([1 1000]);
+set(gca,'fontSize',16,'fontname','timesnewroman');
+ylhand = get(gca,'ylabel');
+set(ylhand,'string','best','fontsize',16,'fontname','timesnewroman');
+xlhand = get(gca,'xlabel');
+set(xlhand,'string','number of queries','fontsize',16,'fontname','timesnewroman');
+plot([1,MAX_ITER],[1,1],'.-k','LineWidth',2);
+plot([1,MAX_ITER],[0,0],'.-k','LineWidth',2);
+
+subplot(4,1,3);
+hold on;
+shadedErrorBar(1:MAX_ITER,corr_ggbs_theta100,{@mean,@std},'r',2);
+shadedErrorBar(1:MAX_ITER,corr_ggbs_theta10,{@mean,@std},'b',2);
+shadedErrorBar(1:MAX_ITER,corr_ggbs_theta1,{@mean,@std},'k',2);
+% plot(mean(corr_ggbs,1),'r','LineWidth',2);
+% plot(mean(corr_toubia,1),'b','LineWidth',2);
+xlim([1 1000]);
+set(gca,'fontSize',16,'fontname','timesnewroman');
+ylhand = get(gca,'ylabel');
+set(ylhand,'string','corr({\bf w}^*,{\bf w}_0)','fontsize',16,'fontname','timesnewroman');
+xlhand = get(gca,'xlabel');
+set(xlhand,'string','number of queries','fontsize',16,'fontname','timesnewroman');
+plot([1,MAX_ITER],[1,1],'.-k','LineWidth',2);
+plot([1,MAX_ITER],[0,0],'.-k','LineWidth',2);
+
+subplot(4,1,4);
+hold on;
+shadedErrorBar(1:MAX_ITER,dist_ggbs_theta100,{@mean,@std},'r',2);
+shadedErrorBar(1:MAX_ITER,dist_ggbs_theta10,{@mean,@std},'b',2);
+shadedErrorBar(1:MAX_ITER,dist_ggbs_theta1,{@mean,@std},'k',2);
+% plot(mean(dist_ggbs,1),'r','LineWidth',2);
+% plot(mean(dist_toubia,1),'b','LineWidth',2);
+xlim([1 1000]);
+set(gca,'fontSize',16,'fontname','timesnewroman');
+ylhand = get(gca,'ylabel');
+set(ylhand,'string','||{\bf w}^*-{\bf w}_0||','fontsize',16,'fontname','timesnewroman');
+xlhand = get(gca,'xlabel');
+set(xlhand,'string','number of queries','fontsize',16,'fontname','timesnewroman');
 
 
+%% calculate the noise rate (probability of making a mistake) for all results
+GISA_theta100 = zeros(TEST,MAX_ITER); % chance for the picked design of a pair to be picked
+GISA_theta10 = zeros(TEST,MAX_ITER);
+GISA_theta1 = zeros(TEST,MAX_ITER);
+toubia_theta100 = zeros(TEST,MAX_ITER);
+toubia_theta10 = zeros(TEST,MAX_ITER);
+toubia_theta1 = zeros(TEST,MAX_ITER);
+
+theta = 100;
+load('profit_s10000_inq100_n1000_comp1_theta100_0430.mat');
+wtrue = w*theta;
+wtrue(1:5) = wtrue(1:5)-wtrue(5);
+wtrue(6:10) = wtrue(6:10)-wtrue(10);
+wtrue(11:15) = wtrue(11:15)-wtrue(15);
+wtrue(16:20) = wtrue(16:20)-wtrue(20);
+wtrue(21:25) = wtrue(21:25)-wtrue(25);
+wtrue(26:30) = wtrue(26:30)-wtrue(30);
+for i = 1:TEST
+    for j = 1:MAX_ITER
+        p = pairs_set{i}(i,:);
+        u = (Xf(p(1),:)-Xf(p(2),:))*wtrue';
+        GISA_theta100(i,j) = 1/(1+exp(-u));
+    end
+end
+
+theta = 10;
+load('profit_s10000_inq100_n1000_comp1_theta10_0514.mat');
+wtrue = w*theta;
+wtrue(1:5) = wtrue(1:5)-wtrue(5);
+wtrue(6:10) = wtrue(6:10)-wtrue(10);
+wtrue(11:15) = wtrue(11:15)-wtrue(15);
+wtrue(16:20) = wtrue(16:20)-wtrue(20);
+wtrue(21:25) = wtrue(21:25)-wtrue(25);
+wtrue(26:30) = wtrue(26:30)-wtrue(30);
+for i = 1:TEST
+    for j = 1:MAX_ITER
+        p = pairs_set{i}(i,:);
+        u = (Xf(p(1),:)-Xf(p(2),:))*wtrue';
+        GISA_theta10(i,j) = 1/(1+exp(-u));
+    end
+end
+
+theta = 1;
+load('profit_s10000_inq100_n1000_comp1_theta1_0514.mat');
+wtrue = w*theta;
+wtrue(1:5) = wtrue(1:5)-wtrue(5);
+wtrue(6:10) = wtrue(6:10)-wtrue(10);
+wtrue(11:15) = wtrue(11:15)-wtrue(15);
+wtrue(16:20) = wtrue(16:20)-wtrue(20);
+wtrue(21:25) = wtrue(21:25)-wtrue(25);
+wtrue(26:30) = wtrue(26:30)-wtrue(30);
+for i = 1:TEST
+    for j = 1:MAX_ITER
+        p = pairs_set{i}(i,:);
+        u = (Xf(p(1),:)-Xf(p(2),:))*wtrue';
+        GISA_theta1(i,j) = 1/(1+exp(-u));
+    end
+end
+
+theta = 100;
+load('toubia_s10000_n1000_comp1_theta100_0513.mat');
+wtrue = w*theta;
+wtrue(1:5) = wtrue(1:5)-wtrue(5);
+wtrue(6:10) = wtrue(6:10)-wtrue(10);
+wtrue(11:15) = wtrue(11:15)-wtrue(15);
+wtrue(16:20) = wtrue(16:20)-wtrue(20);
+wtrue(21:25) = wtrue(21:25)-wtrue(25);
+wtrue(26:30) = wtrue(26:30)-wtrue(30);
+for i = 1:TEST
+    for j = 1:MAX_ITER
+        p = pairs_set{i}(i,:);
+        u = (Xf(p(1),:)-Xf(p(2),:))*wtrue';
+        toubia_theta100(i,j) = 1/(1+exp(-u));
+    end
+end
+
+theta = 10;
+load('toubia_s10000_n1000_comp1_theta10_0513.mat');
+wtrue = w*theta;
+wtrue(1:5) = wtrue(1:5)-wtrue(5);
+wtrue(6:10) = wtrue(6:10)-wtrue(10);
+wtrue(11:15) = wtrue(11:15)-wtrue(15);
+wtrue(16:20) = wtrue(16:20)-wtrue(20);
+wtrue(21:25) = wtrue(21:25)-wtrue(25);
+wtrue(26:30) = wtrue(26:30)-wtrue(30);
+for i = 1:TEST
+    for j = 1:MAX_ITER
+        p = pairs_set{i}(i,:);
+        u = (Xf(p(1),:)-Xf(p(2),:))*wtrue';
+        toubia_theta10(i,j) = 1/(1+exp(-u));
+    end
+end
+
+theta = 1;
+load('toubia_s10000_n1000_comp1_theta1_0513.mat');
+wtrue = w*theta;
+wtrue(1:5) = wtrue(1:5)-wtrue(5);
+wtrue(6:10) = wtrue(6:10)-wtrue(10);
+wtrue(11:15) = wtrue(11:15)-wtrue(15);
+wtrue(16:20) = wtrue(16:20)-wtrue(20);
+wtrue(21:25) = wtrue(21:25)-wtrue(25);
+wtrue(26:30) = wtrue(26:30)-wtrue(30);
+for i = 1:TEST
+    for j = 1:MAX_ITER
+        p = pairs_set{i}(i,:);
+        u = (Xf(p(1),:)-Xf(p(2),:))*wtrue';
+        toubia_theta1(i,j) = 1/(1+exp(-u));
+    end
+end
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% THE REST ARE OBSOLETE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% long term
 load('profit_s100000_inq100_C1_0210.mat');
 TEST = length(prob_set);
