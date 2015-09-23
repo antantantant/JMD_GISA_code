@@ -52,26 +52,24 @@ function [w, best_C, weights] = crossvalidation(X,y)
     
     
     folds = 10;
-    C = [1e-1,1,5,1e1,5e1,1e2,5e2,1e3,5e3,1e4]; % search for C
-%     C = [10000];
+%     C = [1e-1,1,5,1e1,5e1,1e2,5e2,1e3,5e3,1e4]; % search for C
+    C = [1e-3,1e-2,1e-1,1];
     
     %# grid search, and cross-validation
     cv_acc = zeros(numel(C),1);
     A = bsxfun(@times,X,y);
     for i=1:numel(C)
         cv_acc(i) = train(sparse([ones(n,1);-ones(n,1)]), sparse([A;-A]), ...
-        sprintf('-s 0 -e 1e-2 -q -c %f -v %d', C(i), folds));
+        sprintf('-s 1 -e 1e-2 -q -c %f -v %d', C(i), folds));
     end
     
     %# pair (C,gamma) with best accuracy
-    idx = find(cv_acc==max(cv_acc));
-    idx = idx(end);
-    
+    [~,idx] = max(cv_acc);
     %# now you can train you model using best_C and best_gamma
     best_C = C(idx);
     
     model = train(sparse([ones(n,1);-ones(n,1)]), sparse([A;-A]), ...
-        sprintf('-s 0 -e 1e-2 -q -c %f', best_C));
+        sprintf('-s 1 -e 1e-2 -q -c %f', best_C));
     w = (model.w);
 %     w = ((A'*A+1/best_C*eye(size(A,2)))\A'*ones(size(A,1),1))';
     weights = 1;

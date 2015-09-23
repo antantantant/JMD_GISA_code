@@ -8,18 +8,17 @@ function [W,w0,C,weights] = sampling(s,d,W0,A)
     else
         [w0, C, weights] = crossvalidation(sparse(A),ones(size(A,1),1)); 
         
-%         step = length(C);
-%         W = zeros(size(W0,1)*step,size(W0,2));
-%         for i = 1:step
-            As = bsxfun(@times, A, sqrt(exp(A*w0'))./(1+exp(A*w0')));
+        step = length(C);
+        W = zeros(size(W0,1)*step,size(W0,2));
+        for i = 1:step
+            As = bsxfun(@times, A, sqrt(exp(A*w0(i,:)'))./(1+exp(A*w0(i,:)')));
             As(isnan(As))=0;
-            Sigma_inv = (eye(length(w0))/C+(As'*As));
+            Sigma_inv = (eye(d)/C(i)+(As'*As));
 %             Sigma_inv = (eye(d)/C(i)+(A'*A));
-%             W_ = W0*(chol(inv(Sigma_inv)))';
-%             W_ = bsxfun(@plus, W_, w0(i,:));  
-%             W((i-1)*size(W0,1)+(1:size(W0,1)),:) = W_; 
-            W = mvnrnd(w0,inv(Sigma_inv),s);
-%         end
+            W_ = W0*(inv(chol(Sigma_inv)));
+            W_ = bsxfun(@plus, W_, w0(i,:));  
+            W((i-1)*size(W0,1)+(1:size(W0,1)),:) = W_;        
+        end
         
 %         step = 10;
 %         W = zeros(size(W0,1)*step,size(W0,2));
