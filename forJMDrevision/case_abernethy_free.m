@@ -1,12 +1,12 @@
 % matlabpool open;
 % load('..\basedata.mat');
-% addpath('..\..\Research\Code\Tools\liblinear\matlab');
+addpath('..\..\\Tools\liblinear\matlab');
 
 c = Xf(:,26:30)*price'-cv; %price - cost
-TEST = 1;
-MAX_ITER = 10000;
+TEST = 12;
+MAX_ITER = 20000;
 prob_set = cell(TEST,1);
-dx_set = cell(TEST,1);
+dxs_set = cell(TEST,1);
 partworths_set = cell(TEST,1);
 target_best_set = zeros(TEST,1);
 cond_set = cell(TEST,1);
@@ -18,8 +18,8 @@ XID(5:5:30)=[];
 sigma = 1e-36;
 Dw = eye(30)*sigma; % randomness in user choices
 
-% nt = size(Xf,1); % number of testing object
-nt = 10;
+nt = size(Xf,1); % number of testing object
+% nt = 10;
 
 theta = 1;
 wtrue = w*theta;
@@ -32,7 +32,7 @@ wtrue(26:30) = wtrue(26:30)-wtrue(30);
 
 num_competitor = 1;
 
-for test = 1:TEST
+parfor test = 1:TEST
     rng(test);
     fprintf('\n%%%%%%%% test number %d %%%%%%%%%%',test);
     
@@ -148,7 +148,8 @@ for test = 1:TEST
     pairs_set{test} = pairs;
     partworths_set{test} = partworths;
     cond_set{test} = conds;
+    dxs_set{test} = dxs;
 end
 save(['abernethy_free_s',num2str(s),'_n',num2str(MAX_ITER),...
     '_comp',num2str(num_competitor),'_theta',num2str(theta),'_0923.mat'],...
-    'prob_set','dx_set','partworths_set','target_best_set','cond_set','-v7.3');
+    'prob_set','dxs_set','partworths_set','target_best_set','cond_set','-v7.3');

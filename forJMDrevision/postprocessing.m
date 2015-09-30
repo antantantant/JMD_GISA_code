@@ -3,9 +3,9 @@ load('..\basedata.mat');
 % addpath('..\..\Tools\liblinear\matlab');
 DX = dXID + dXID';
 TEST = 12;
-MAX_ITER = 1000;
+MAX_ITER = 20000;
 inq = 100;
-theta = 100;
+theta = 1;
 s = 1e4;
 
 c = Xf(:,26:30)*price'-cv; %price - cost
@@ -26,47 +26,57 @@ num_competitor = 1;
 
 
 
-%% Plots for GGBS
-load(['profit_s',num2str(s),'_inq',num2str(inq),...
-    '_n',num2str(MAX_ITER),'_comp',num2str(num_competitor),...
-    '_theta',num2str(theta),'_0514.mat']);
-prob_ggbs = zeros(TEST,MAX_ITER);
-best_ggbs = zeros(TEST,MAX_ITER);
-corr_ggbs = zeros(TEST,MAX_ITER);
-dist_ggbs = zeros(TEST,MAX_ITER);
+%% Plots for GISA and Abernethy's methods
+plotGISA = false;
+plotAbernethy = true;
 
-for i = 1:TEST
-    prob = prob_set{i};
-    prob_ggbs(i,:) = prob(target_best_set(i),1:MAX_ITER);
-    best_ggbs(i,:) = prob(target_best_set(i),1:MAX_ITER)==max(prob(:,1:MAX_ITER));
-    corr_ggbs(i,:) = corr(partworths_set{i},wtrue')';
-    dist_ggbs(i,:) = sqrt(sum(bsxfun(@minus,partworths_set{i},wtrue').^2,1));
+if(plotGISA)
+    load(['gisa_s',num2str(s),'_inq',num2str(inq),...
+        '_n',num2str(MAX_ITER),'_comp',num2str(num_competitor),...
+        '_theta',num2str(theta),'_0514.mat']);
+    prob_gisa = zeros(TEST,MAX_ITER);
+    best_gisa = zeros(TEST,MAX_ITER);
+    corr_gisa = zeros(TEST,MAX_ITER);
+    dist_gisa = zeros(TEST,MAX_ITER);
+
+    for i = 1:TEST
+        prob = prob_set{i};
+        prob_gisa(i,:) = prob(target_best_set(i),1:MAX_ITER);
+        best_gisa(i,:) = prob(target_best_set(i),1:MAX_ITER)==max(prob(:,1:MAX_ITER));
+        corr_gisa(i,:) = corr(partworths_set{i},wtrue')';
+        dist_gisa(i,:) = sqrt(sum(bsxfun(@minus,partworths_set{i},wtrue').^2,1));
+    end
 end
 
-%% Plots for Toubia's method
-load(['toubia_s',num2str(s),'_n',num2str(MAX_ITER),...
-    '_comp',num2str(num_competitor),'_theta',num2str(theta),'_0513.mat']);
-prob_toubia = zeros(TEST,MAX_ITER);
-corr_toubia = zeros(TEST,MAX_ITER);
-dist_toubia = zeros(TEST,MAX_ITER);
-best_toubia = zeros(TEST,MAX_ITER);
-for i = 1:TEST
-    prob = prob_set{i};
-    prob_toubia(i,:) = prob(target_best_set(i),1:MAX_ITER);
-    best_toubia(i,:) = prob(target_best_set(i),1:MAX_ITER)==max(prob(:,1:MAX_ITER));
-    partworths = partworths_set{i};
-    corr_toubia(i,:) = corr(partworths,wtrue')';
-    dist_toubia(i,:) = sqrt(sum(bsxfun(@minus,partworths,wtrue').^2,1));
+if(plotAbernethy)
+    load(['abernethy_free_s',num2str(s),'_n',num2str(MAX_ITER),...
+        '_comp',num2str(num_competitor),'_theta',num2str(theta),'_0923.mat']);
+    prob_abernethy = zeros(TEST,MAX_ITER);
+    corr_abernethy = zeros(TEST,MAX_ITER);
+    dist_abernethy = zeros(TEST,MAX_ITER);
+    best_abernethy = zeros(TEST,MAX_ITER);
+    for i = 1:TEST
+        prob = prob_set{i};
+        prob_abernethy(i,:) = prob(target_best_set(i),1:MAX_ITER);
+        best_abernethy(i,:) = prob(target_best_set(i),1:MAX_ITER)==max(prob(:,1:MAX_ITER));
+        partworths = partworths_set{i};
+        corr_abernethy(i,:) = corr(partworths,wtrue')';
+        dist_abernethy(i,:) = sqrt(sum(bsxfun(@minus,partworths,wtrue').^2,1));
+    end
 end
 
 figure;
 subplot(4,1,1);
 hold on;
-shadedErrorBar(1:MAX_ITER,prob_ggbs,{@mean,@std},'r',2);
-shadedErrorBar(1:MAX_ITER,prob_toubia,{@mean,@std},'b',2);
+if(plotGISA)
+    shadedErrorBar(1:MAX_ITER,prob_gisa,{@mean,@std},'r',2);
+end
+if(plotAbernethy)
+    shadedErrorBar(1:MAX_ITER,prob_abernethy,{@mean,@std},'b',2);
+end
 % plot(mean(prob_ggbs,1),'r','LineWidth',2);
 % plot(mean(prob_toubia,1),'b','LineWidth',2);
-xlim([1 1000]);
+xlim([1 MAX_ITER]);
 set(gca,'FontSize',16,'Fontname','Timesnewroman');
 ylhand = get(gca,'ylabel');
 set(ylhand,'string','\pi^{(k^*)}_a','fontsize',20,'Fontname','Timesnewroman');
@@ -77,11 +87,15 @@ plot([1,MAX_ITER],[0,0],'.-k','LineWidth',2);
 
 subplot(4,1,2);
 hold on;
-shadedErrorBar(1:MAX_ITER,best_ggbs,{@mean,@std},'r',2);
-shadedErrorBar(1:MAX_ITER,best_toubia,{@mean,@std},'b',2);
+if(plotGISA)
+    shadedErrorBar(1:MAX_ITER,best_gisa,{@mean,@std},'r',2);
+end
+if(plotAbernethy)
+    shadedErrorBar(1:MAX_ITER,best_abernethy,{@mean,@std},'b',2);
+end
 % plot(mean(best_ggbs,1),'r','LineWidth',2);
 % plot(mean(best_toubia,1),'b','LineWidth',2);
-xlim([1 1000]);
+xlim([1 MAX_ITER]);
 set(gca,'fontSize',16,'fontname','timesnewroman');
 ylhand = get(gca,'ylabel');
 set(ylhand,'string','best','fontsize',16,'fontname','timesnewroman');
@@ -92,11 +106,15 @@ plot([1,MAX_ITER],[0,0],'.-k','LineWidth',2);
 
 subplot(4,1,3);
 hold on;
-shadedErrorBar(1:MAX_ITER,corr_ggbs,{@mean,@std},'r',2);
-shadedErrorBar(1:MAX_ITER,corr_toubia,{@mean,@std},'b',2);
+if(plotGISA)
+    shadedErrorBar(1:MAX_ITER,corr_gisa,{@mean,@std},'r',2);
+end
+if(plotAbernethy)
+    shadedErrorBar(1:MAX_ITER,corr_abernethy,{@mean,@std},'b',2);
+end
 % plot(mean(corr_ggbs,1),'r','LineWidth',2);
 % plot(mean(corr_toubia,1),'b','LineWidth',2);
-xlim([1 1000]);
+xlim([1 MAX_ITER]);
 set(gca,'fontSize',16,'fontname','timesnewroman');
 ylhand = get(gca,'ylabel');
 set(ylhand,'string','corr({\bf w}^*,{\bf w}_0)','fontsize',16,'fontname','timesnewroman');
@@ -107,8 +125,12 @@ plot([1,MAX_ITER],[0,0],'.-k','LineWidth',2);
 
 subplot(4,1,4);
 hold on;
-shadedErrorBar(1:MAX_ITER,dist_ggbs,{@mean,@std},'r',2);
-shadedErrorBar(1:MAX_ITER,dist_toubia,{@mean,@std},'b',2);
+if(plotGISA)
+    shadedErrorBar(1:MAX_ITER,dist_gisa,{@mean,@std},'r',2);
+end
+if(plotAbernethy)
+    shadedErrorBar(1:MAX_ITER,dist_abernethy,{@mean,@std},'b',2);
+end
 % plot(mean(dist_ggbs,1),'r','LineWidth',2);
 % plot(mean(dist_toubia,1),'b','LineWidth',2);
 xlim([1 1000]);
