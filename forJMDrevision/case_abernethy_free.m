@@ -107,7 +107,7 @@ for test = 1:TEST
 
             % Abernethy's method, do not project onto the subspace
             % perpendicular to w0
-            B = eye(size(A,2))/C+(As'*As);
+            B = Sigma_inv;
             % Abernethy's method, w/ logistic hessian
 %             B = (eye(size(A,2))-(w0'*w0)/(w0*w0'))*(eye(size(A,2))/C+(As'*As));
             % Abernethy's method, w/ quadratic hessian
