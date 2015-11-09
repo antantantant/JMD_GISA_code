@@ -1,11 +1,11 @@
 %% head
-load('..\basedata.mat');
+load('../basedata.mat');
 % addpath('..\..\Tools\liblinear\matlab');
 DX = dXID + dXID';
 TEST = 12;
-MAX_ITER = 20000;
+MAX_ITER = 10000;
 inq = 100;
-theta = 1;
+theta = 100;
 s = 1e4;
 
 c = Xf(:,26:30)*price'-cv; %price - cost
@@ -27,13 +27,13 @@ num_competitor = 1;
 
 
 %% Plots for GISA and Abernethy's methods
-plotGISA = false;
-plotAbernethy = true;
+plotGISA = true;
+plotAbernethy = false;
 
 if(plotGISA)
-    load(['gisa_s',num2str(s),'_inq',num2str(inq),...
-        '_n',num2str(MAX_ITER),'_comp',num2str(num_competitor),...
-        '_theta',num2str(theta),'_0514.mat']);
+%     load(['gisa_s',num2str(s),'_inq',num2str(inq),...
+%         '_n',num2str(MAX_ITER),'_comp',num2str(num_competitor),...
+%         '_theta',num2str(theta),'_0514.mat']);
     prob_gisa = zeros(TEST,MAX_ITER);
     best_gisa = zeros(TEST,MAX_ITER);
     corr_gisa = zeros(TEST,MAX_ITER);
@@ -49,8 +49,8 @@ if(plotGISA)
 end
 
 if(plotAbernethy)
-    load(['abernethy_free_s',num2str(s),'_n',num2str(MAX_ITER),...
-        '_comp',num2str(num_competitor),'_theta',num2str(theta),'_0923.mat']);
+%     load(['abernethy_free_s',num2str(s),'_n',num2str(MAX_ITER),...
+%         '_comp',num2str(num_competitor),'_theta',num2str(theta),'_0923.mat']);
     prob_abernethy = zeros(TEST,MAX_ITER);
     corr_abernethy = zeros(TEST,MAX_ITER);
     dist_abernethy = zeros(TEST,MAX_ITER);

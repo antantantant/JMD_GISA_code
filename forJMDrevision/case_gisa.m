@@ -1,15 +1,16 @@
-matlabpool open;
-load('..\basedata.mat');
-addpath('..\..\Tools\liblinear\matlab');
+% parpool(4);
+load('../basedata.mat');
+addpath('../../Tools/liblinear/matlab');
 
 c = Xf(:,26:30)*price'-cv; %price - cost
 TEST = 12;
-MAX_ITER = 50000;
+MAX_ITER = 10000;
 prob_set = cell(TEST,1);
+pairs_set = cell(TEST,1);
 dx_set = cell(TEST,1);
 partworths_set = cell(TEST,1);
 target_best_set = zeros(TEST,1);
-value_expection_set = zeros(TEST,1);
+expected_value_set = cell(TEST,1);
 cond_set = cell(TEST,1);
 s = 1e4;
 inq = 100;
@@ -22,7 +23,7 @@ Dw = eye(30)*sigma; % randomness in user choices
 nt = size(Xf,1); % number of testing object
 % nt = 10;
 
-theta = 1;
+theta = 100;
 wtrue = w*theta;
 wtrue(1:5) = wtrue(1:5)-wtrue(5);
 wtrue(6:10) = wtrue(6:10)-wtrue(10);
@@ -37,23 +38,25 @@ parfor test = 1:TEST
     rng(test);
     fprintf('\n%%%%%%%% test number %d %%%%%%%%%%',test);
     
-    % Calculate true distribution under sigma
-    Wtrue = mvnrnd(wtrue,Dw,s);
+% Calculate true distribution under sigma
+    Wtrue = wtrue*theta;
     util = (Wtrue*Xf(1:nt,:)');
     competitors = randperm(nt,num_competitor);
     util_competitor = util(:,competitors);
     util_competitor_all = kron(util_competitor,ones(1,nt));
     util_all = repmat(util,1,num_competitor);
     exp_delta_util = exp(-util_all+util_competitor_all);
-    exp_sum_delta_util = exp_delta_util*repmat(eye(nt),num_competitor,1)+1;
-    obj_app = bsxfun(@plus,-log(exp_sum_delta_util),log(c(1:nt,:)'));
+    exp_sum_delta_util = exp_delta_util*sparse(repmat(eye(nt),num_competitor,1))+1;
+    obj_app = bsxfun(@plus,-log(exp_sum_delta_util),log(c'));
+    
     best = bsxfun(@eq, obj_app, max(obj_app,[],2));
     best = best.*util;
     best(best==0) = -1e9;
     best = bsxfun(@eq, best, max(best,[],2));
-    target_dist = sum(best/s)';
-    [~,target_best] = max(target_dist);
-%     target_best = 1701;
+    
+    target_dist = sum(best/s,1)';
+    [~,target_best] = max(target_dist,[],1);
+    %     target_best = 1701;
     target_best_set(test) = target_best;
     
     queryID = dXID;
@@ -92,7 +95,7 @@ parfor test = 1:TEST
             [~,guess] = max(probability_obj);
             fprintf('iter: %d, truth: %d (%f), guess: %d, max value cand.: %d, corr: %0.2f, norm: %0.2f  \n',...
                 nq, target_best, probability_obj(target_best), guess,...
-                find(expected_value==max(expected_value)), corr(w0',wtrue(XID)'), norm(w0));
+                find(expected_value==max(expected_value)), corr(w0',wtrue(XID)'), norm(w0'-wtrue(XID)'));
             
             [~,sort_obj] = sort(probability_obj,'descend');
             sort_obj_nonzero = sort_obj(1:sum(probability_obj>0));
@@ -231,9 +234,9 @@ parfor test = 1:TEST
 end
 save(['gisa_s',num2str(s),'_inq',num2str(inq),'_n',num2str(MAX_ITER),...
     '_comp',num2str(num_competitor),'_theta',num2str(theta),...
-    '_nt',num2str(nt),'_1001.mat'],...
+    '_nt',num2str(nt),'_1030.mat'],...
     'prob_set','pairs_set','partworths_set','target_best_set','cond_set',...
-    'value_expection_set','strategy_set','-v7.3');
+    'expected_value_set','strategy_set','-v7.3');
 % save(['profit_s',num2str(s),'_inq',num2str(inq),...
 %     '_n',num2str(MAX_ITER),'_comp',num2str(num_competitor),...
 %     '_theta',num2str(theta),'_0515.mat'],'prob_set','pairs_set',...
