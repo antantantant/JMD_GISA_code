@@ -2,6 +2,14 @@
 % fixed importance sampling code on 08262016
 % on 08262016, showed good gisa result when theta=100, see gisa_s10000_inq100_n1000_comp1_theta100_nt2455_08262016
 % but theta=1 does not work, which is reasonable?
+
+% theta = 100, s = 1e4, inq = 100, GISA DONE
+% theta = 100, s = 1e5, inq = 100, GISA run once
+% theta = 100, s = 1e4, inq = 10, GISA running
+% theta = 1, s = 1e4, inq = 100, GISA 
+% theta = 1, s = 1e4, inq = 100, Abernethy
+% theta = 100, s = 1e4, inq = 100, Abernethy
+
 %%
 
 
@@ -17,10 +25,12 @@ pairs_set = cell(TEST,1);
 dx_set = cell(TEST,1);
 partworths_set = cell(TEST,1);
 target_best_set = zeros(TEST,1);
+strategy_set = cell(TEST,1); % 1: determinant, 2: most probable 
+CC_set = cell(TEST,1); 
 expected_value_set = cell(TEST,1);
 cond_set = cell(TEST,1);
-s = 1e5;
-inq = 100;
+s = 1e4;
+inq = 10;
 W0 = mvnrnd(zeros(1,d),eye(length(w)),s);
 XID = 1:30; 
 XID(5:5:30)=[];
@@ -60,7 +70,6 @@ parfor test = 1:TEST
     best = best.*util;
     best(best==0) = -1e9;
     best = bsxfun(@eq, best, max(best,[],2));
-    
     target_dist = sum(best/s,1)';
     [~,target_best] = max(target_dist,[],1);
     %     target_best = 1701;
@@ -96,7 +105,7 @@ parfor test = 1:TEST
         if nq>1
             As = bsxfun(@times, A, sqrt(exp(A*w0'))./(1+exp(A*w0')));
             As(isnan(As))=0;
-            Sigma_inv = (eye(length(XID))/C+(As'*As));
+            Sigma_inv = (eye(size(A,2))/C+(As'*As));
             B = (eye(size(A,2))-(w0'*w0)/(w0*w0'))*(eye(size(A,2))/C+(As'*As));
             conds(nq) = cond(Sigma_inv);
             
@@ -211,6 +220,7 @@ parfor test = 1:TEST
                 
             else
                 probability_obj_set(:,nq:end) = repmat(probability_obj,1,MAX_ITER-nq+1);
+                expected_values(:,nq:end) = repmat(expected_value,1,MAX_ITER-nq+1);
                 partworths(XID,nq:end) = repmat(w0',1,MAX_ITER-nq+1);
                 nq = MAX_ITER+1;
             end
@@ -226,6 +236,7 @@ parfor test = 1:TEST
             
             queryID(min(options),max(options))=0;
             probability_obj_set(:,nq) = probability_obj;
+            expected_values(:,nq) = expected_value;
             partworths(XID,nq) = w0';
             nq = nq+1;
             nquery = nquery - 1;
