@@ -1,5 +1,5 @@
 function [f,W,I,unique_I,w0,C,weights,expected_value] = appObjDistribution(s,d,W0,X,c,A,competitors)
-    [W,w0,C,weights] = sampling(s,d,W0,A);
+    [W,w0,C,weights] = sampling(s,d,A);
     
     util = (W*X');
     num_competitor = length(competitors);
@@ -14,9 +14,9 @@ function [f,W,I,unique_I,w0,C,weights,expected_value] = appObjDistribution(s,d,W
     
     best = bsxfun(@eq, obj_app, max(obj_app,[],2));
     best = best.*util;
-    best(best==0) = -1e9;
+    best(best==0) = -1e32;
     best = bsxfun(@eq, best, max(best,[],2));
-    f = (kron(weights,ones(1,size(W0,1)))*best/s)';
+    f = (weights'*best/sum(weights))';
 
     % each line of best needs to have only one 1
     if any(sum(best,2)>1)
@@ -31,5 +31,5 @@ function [f,W,I,unique_I,w0,C,weights,expected_value] = appObjDistribution(s,d,W
     unique_I(unique_I>length(c))=[];
     
     % to calculate expected profit of each candidate
-    expected_value = sum(exp(obj_app),1)/s;
+    expected_value = weights'*exp(obj_app)/sum(weights);
     

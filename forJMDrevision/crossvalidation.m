@@ -1,5 +1,5 @@
 % output optimal C and associated w
-function [w, best_C, weights] = crossvalidation(X,y)
+function [w, best_C] = crossvalidation(X,y)
 
 %%%%%%%%%%%%%%%% ALL C, NO CROSSVALIDATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %     fprintf('\n svm training...');
@@ -74,7 +74,7 @@ function [w, best_C, weights] = crossvalidation(X,y)
         sprintf('-s 0 -e 1e-6 -q -c %f', best_C));
     w = (model.w);
 %     w = ((A'*A+1/best_C*eye(size(A,2)))\A'*ones(size(A,1),1))';
-    weights = 1;
+%     weights = 1;
 %     fprintf('done. \n');
 
 %     for i = 1:length(C)

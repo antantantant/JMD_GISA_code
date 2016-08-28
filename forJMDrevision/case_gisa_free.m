@@ -1,6 +1,6 @@
 % matlabpool open;
 load('..\basedata.mat');
-addpath('..\..\Tools\liblinear\matlab');
+addpath('..\..\..\Code\Tools\liblinear\matlab');
 
 c = Xf(:,26:30)*price'-cv; %price - cost
 TEST = 1;
@@ -19,10 +19,10 @@ XID(5:5:30)=[];
 sigma = 1e-6;
 Dw = eye(30)*sigma; % randomness in user choices
 
-% nt = size(Xf,1); % number of testing object
-nt = 1000;
+nt = size(Xf,1); % number of testing object
+% nt = 10;
 
-theta = 1;
+theta = 100;
 wtrue = w*theta;
 wtrue(1:5) = wtrue(1:5)-wtrue(5);
 wtrue(6:10) = wtrue(6:10)-wtrue(10);
@@ -33,7 +33,9 @@ wtrue(26:30) = wtrue(26:30)-wtrue(30);
 
 num_competitor = 1;
 
-parfor test = 1:TEST
+% parfor test = 1:TEST
+for test = 1:TEST
+
     rng(test);
     fprintf('\n%%%%%%%% test number %d %%%%%%%%%%',test);
     
@@ -137,7 +139,7 @@ parfor test = 1:TEST
             As(isnan(As))=0;
             B = (eye(size(A,2))-(w0'*w0)/(w0*w0'))*(eye(size(A,2))/C+(As'*As));
 %             B = (eye(size(A,2))-(w0'*w0)/(w0*w0'))*(A'*A+1/C*eye(size(A,2)));
-            [V,D] = eig((B+B')/2);
+            [V,D] = eig(B);
             e = diag(D);
             v = V(:,e==min(e(e>1e-12)));
             v = v(:,1);
@@ -155,8 +157,8 @@ parfor test = 1:TEST
                 u = W*Q_remain'>0; % get all utility signs
                 u = bsxfun(@times, u, I); % label all positive signs with query numbers
                 for j = 1:length(unique_I)
-                    temp_set(unique_I(j),:) = (kron(weights,ones(1,size(W0,1)))*(u==unique_I(j)))/...
-                        (kron(weights,ones(1,size(W0,1)))*(I==unique_I(j)));
+                    temp_set(unique_I(j),:) = (weights'*(u==unique_I(j)))/...
+                        (weights'*(I==unique_I(j)));
                 end
 
                 probability_query_pos = sum(bsxfun(@times,temp_set,probability_obj),1)';% probability of new query being positive
