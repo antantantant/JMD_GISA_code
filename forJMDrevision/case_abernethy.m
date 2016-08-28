@@ -1,15 +1,28 @@
+%% NOTES
+% fixed importance sampling code on 08262016
+% on 08262016, showed good gisa result when theta=100, see gisa_s10000_inq100_n1000_comp1_theta100_nt2455_08262016
+% but theta=1 does not work, which is reasonable?
+
+% theta = 100, s = 1e4, inq = 100, GISA DONE need expected values
+% theta = 100, s = 1e5, inq = 100, GISA run once
+% theta = 100, s = 1e4, inq = 10, GISA running
+% theta = 1, s = 1e4, inq = 100, GISA 
+% theta = 1, s = 1e4, Abernethy
+% theta = 100, s = 1e4, Abernethy running
+
 parpool(4);
 load('../basedata.mat');
 addpath('../../Tools/liblinear/matlab');
 
 c = Xf(:,26:30)*price'-cv; %price - cost
-TEST = 12;
-MAX_ITER = 10000;
+TEST = 20;
+MAX_ITER = 1000;
 prob_set = cell(TEST,1);
 pairs_set = cell(TEST,1);
 dx_set = cell(TEST,1);
 partworths_set = cell(TEST,1);
 target_best_set = zeros(TEST,1);
+strategy_set = cell(TEST,1); % 1: determinant, 2: most probable 
 expected_value_set = cell(TEST,1);
 cond_set = cell(TEST,1);
 s = 1e4;
@@ -35,7 +48,7 @@ wtrue(26:30) = wtrue(26:30)-wtrue(30);
 num_competitor = 1;
 
 
-for test = 1:TEST
+parfor test = 1:TEST
     rng(test);
     fprintf('\n%%%%%%%% test number %d %%%%%%%%%%',test);
     
@@ -54,7 +67,6 @@ for test = 1:TEST
     best = best.*util;
     best(best==0) = -1e9;
     best = bsxfun(@eq, best, max(best,[],2));
-    
     target_dist = sum(best/s,1)';
     [~,target_best] = max(target_dist,[],1);
     %     target_best = 1701;
@@ -152,5 +164,5 @@ for test = 1:TEST
 end
 save(['abernethy_s',num2str(s),'_n',num2str(MAX_ITER),...
     '_comp',num2str(num_competitor),'_theta',num2str(theta),...
-    '_nt',num2str(nt),'_1031.mat'],...
+    '_nt',num2str(nt),'_08272016.mat'],...
     'pairs_set','prob_set','partworths_set','target_best_set','cond_set','expected_value_set','-v7.3');
