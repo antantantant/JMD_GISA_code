@@ -1,10 +1,17 @@
+%% NOTES
+% fixed importance sampling code on 08262016
+% on 08262016, showed good gisa result when theta=100, see gisa_s10000_inq100_n1000_comp1_theta100_nt2455_08262016
+% but theta=1 does not work, which is reasonable?
+%%
+
+
 % parpool(4);
 load('../basedata.mat');
 addpath('../../Tools/liblinear/matlab');
 
 c = Xf(:,26:30)*price'-cv; %price - cost
-TEST = 12;
-MAX_ITER = 10000;
+TEST = 20;
+MAX_ITER = 1000;
 prob_set = cell(TEST,1);
 pairs_set = cell(TEST,1);
 dx_set = cell(TEST,1);
@@ -12,7 +19,7 @@ partworths_set = cell(TEST,1);
 target_best_set = zeros(TEST,1);
 expected_value_set = cell(TEST,1);
 cond_set = cell(TEST,1);
-s = 1e4;
+s = 1e5;
 inq = 100;
 W0 = mvnrnd(zeros(1,d),eye(length(w)),s);
 XID = 1:30; 
@@ -47,7 +54,7 @@ parfor test = 1:TEST
     util_all = repmat(util,1,num_competitor);
     exp_delta_util = exp(-util_all+util_competitor_all);
     exp_sum_delta_util = exp_delta_util*sparse(repmat(eye(nt),num_competitor,1))+1;
-    obj_app = bsxfun(@plus,-log(exp_sum_delta_util),log(c'));
+    obj_app = bsxfun(@plus,-log(exp_sum_delta_util),log(c(1:nt,:)'));
     
     best = bsxfun(@eq, obj_app, max(obj_app,[],2));
     best = best.*util;
@@ -90,6 +97,7 @@ parfor test = 1:TEST
             As = bsxfun(@times, A, sqrt(exp(A*w0'))./(1+exp(A*w0')));
             As(isnan(As))=0;
             Sigma_inv = (eye(length(XID))/C+(As'*As));
+            B = (eye(size(A,2))-(w0'*w0)/(w0*w0'))*(eye(size(A,2))/C+(As'*As));
             conds(nq) = cond(Sigma_inv);
             
             [~,guess] = max(probability_obj);
@@ -138,8 +146,7 @@ parfor test = 1:TEST
             
             unsampled = unique(queryID);
             unsampled(unsampled==0)=[];
-            As = bsxfun(@times, A, sqrt(exp(A*w0'))./(1+exp(A*w0')));
-            [V,D] = eig(Sigma_inv);
+            [V,D] = eig(B);
             e = diag(D);
             v = V(:,e==min(e(e>1e-12)));
             v = v(:,1);
@@ -157,8 +164,8 @@ parfor test = 1:TEST
                 u = W*Q_remain'>0; % get all utility signs
                 u = bsxfun(@times, u, I); % label all positive signs with query numbers
                 for j = 1:length(unique_I)
-                    temp_set(unique_I(j),:) = (kron(weights,ones(1,size(W0,1)))*(u==unique_I(j)))/...
-                        (kron(weights,ones(1,size(W0,1)))*(I==unique_I(j)));
+                    temp_set(unique_I(j),:) = (weights'*(u==unique_I(j)))/...
+                        (weights'*(I==unique_I(j)));
                 end
 
                 probability_query_pos = sum(bsxfun(@times,temp_set,probability_obj),1)';% probability of new query being positive
@@ -201,6 +208,7 @@ parfor test = 1:TEST
                     nq = nq+1;
                     nquery = nquery - 1;
                 end
+                
             else
                 probability_obj_set(:,nq:end) = repmat(probability_obj,1,MAX_ITER-nq+1);
                 partworths(XID,nq:end) = repmat(w0',1,MAX_ITER-nq+1);
@@ -234,7 +242,7 @@ parfor test = 1:TEST
 end
 save(['gisa_s',num2str(s),'_inq',num2str(inq),'_n',num2str(MAX_ITER),...
     '_comp',num2str(num_competitor),'_theta',num2str(theta),...
-    '_nt',num2str(nt),'_1030.mat'],...
+    '_nt',num2str(nt),'_08272016.mat'],...
     'prob_set','pairs_set','partworths_set','target_best_set','cond_set',...
     'expected_value_set','strategy_set','-v7.3');
 % save(['profit_s',num2str(s),'_inq',num2str(inq),...

@@ -5,7 +5,7 @@ DX = dXID + dXID';
 TEST = 12;
 MAX_ITER = 10000;
 inq = 100;
-theta = 100;
+theta = 10;
 s = 1e4;
 
 c = Xf(:,26:30)*price'-cv; %price - cost
@@ -27,8 +27,8 @@ num_competitor = 1;
 
 
 %% Plots for GISA and Abernethy's methods
-plotGISA = true;
-plotAbernethy = false;
+plotGISA = false;
+plotAbernethy = true;
 
 if(plotGISA)
 %     load(['gisa_s',num2str(s),'_inq',num2str(inq),...
@@ -51,6 +51,7 @@ end
 if(plotAbernethy)
 %     load(['abernethy_free_s',num2str(s),'_n',num2str(MAX_ITER),...
 %         '_comp',num2str(num_competitor),'_theta',num2str(theta),'_0923.mat']);
+load abernethy_s10000_n10000_comp1_theta100_nt2455_1031.mat
     prob_abernethy = zeros(TEST,MAX_ITER);
     corr_abernethy = zeros(TEST,MAX_ITER);
     dist_abernethy = zeros(TEST,MAX_ITER);
@@ -66,8 +67,11 @@ if(plotAbernethy)
 end
 
 figure;
+
 subplot(4,1,1);
 hold on;
+title(['Abernethy'*plotAbernethy,'GISA'*plotGISA,' theta=',num2str(theta)]);
+
 if(plotGISA)
     shadedErrorBar(1:MAX_ITER,prob_gisa,{@mean,@std},'r',2);
 end
@@ -133,7 +137,7 @@ if(plotAbernethy)
 end
 % plot(mean(dist_ggbs,1),'r','LineWidth',2);
 % plot(mean(dist_toubia,1),'b','LineWidth',2);
-xlim([1 1000]);
+xlim([1 MAX_ITER]);
 set(gca,'fontSize',16,'fontname','timesnewroman');
 ylhand = get(gca,'ylabel');
 set(ylhand,'string','||{\bf w}^*-{\bf w}_0||','fontsize',16,'fontname','timesnewroman');
