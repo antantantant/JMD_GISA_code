@@ -28,7 +28,7 @@ num_competitor = 1;
 
 %% Plots for GISA and Abernethy's methods
 plotGISA = true;
-% plotAbernethy = true;
+plotAbernethy = false;
 
 if(plotGISA)
     load(['gisa_s',num2str(s),'_inq',num2str(inq),'_n',num2str(MAX_ITER),...

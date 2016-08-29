@@ -4,7 +4,8 @@
 % but theta=1 does not work, which is reasonable?
 
 % theta = 100, s = 1e4, inq = 100, GISA DONE
-% theta = 100, s = 1e5, inq = 100, GISA run once
+% theta = 100, s = 1e3, inq = 100, GISA runnign on my office computer
+% theta = 100, s = 1e5, inq = 100, GISA runnign once on my office computer
 % theta = 100, s = 1e4, inq = 10, GISA running
 % theta = 1, s = 1e4, inq = 100, GISA 
 % theta = 1, s = 1e4, inq = 100, Abernethy
@@ -13,9 +14,9 @@
 %%
 
 
-% parpool(4);
+parpool(4);
 load('../basedata.mat');
-addpath('../../Tools/liblinear/matlab');
+addpath('../../Tools/liblinear');
 
 c = Xf(:,26:30)*price'-cv; %price - cost
 TEST = 20;
@@ -29,8 +30,8 @@ strategy_set = cell(TEST,1); % 1: determinant, 2: most probable
 CC_set = cell(TEST,1); 
 expected_value_set = cell(TEST,1);
 cond_set = cell(TEST,1);
-s = 1e4;
-inq = 10;
+s = 1e3;
+inq = 100;
 W0 = mvnrnd(zeros(1,d),eye(length(w)),s);
 XID = 1:30; 
 XID(5:5:30)=[];
