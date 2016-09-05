@@ -15,8 +15,8 @@ function [W,w0,C,weights] = sampling(s,d,A)
         Sigma = inv(Hessian);
         % importance sampling
         W = mvnrnd(w0,Sigma,s);
-        qW = mvnpdf(W, w0, Sigma)+1e-36;
+        qW = mvnpdf(W, w0, Sigma)+1e-99;
         dW = sum(W.^2,2);
-        pW = exp(-dW/2/C).*prod(1./(1+exp(-W*A')),2)+1e-36;
+        pW = exp(-dW/2/C).*prod(1./(1+exp(-W*A')),2)+1e-99;
         weights = pW./qW;
     end

@@ -10,9 +10,9 @@
 % theta = 1, s = 1e4, Abernethy
 % theta = 100, s = 1e4, Abernethy running
 
-parpool(4);
+% parpool(4);
 load('../basedata.mat');
-addpath('../../Tools/liblinear/matlab');
+addpath('../../Tools/liblinear');
 
 c = Xf(:,26:30)*price'-cv; %price - cost
 TEST = 20;
@@ -164,5 +164,5 @@ parfor test = 1:TEST
 end
 save(['abernethy_s',num2str(s),'_n',num2str(MAX_ITER),...
     '_comp',num2str(num_competitor),'_theta',num2str(theta),...
-    '_nt',num2str(nt),'_08272016.mat'],...
+    '_nt',num2str(nt),'_09042016.mat'],...
     'pairs_set','prob_set','partworths_set','target_best_set','cond_set','expected_value_set','-v7.3');
