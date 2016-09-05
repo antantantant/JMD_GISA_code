@@ -2,14 +2,18 @@
 % fixed importance sampling code on 08262016
 % on 08262016, showed good gisa result when theta=100, see gisa_s10000_inq100_n1000_comp1_theta100_nt2455_08262016
 % but theta=1 does not work, which is reasonable?
+% on 09042016, I found that in sampling, pw and qw are smaller than 1e-36
+% in some cases, so removed these artificial terms, testing gisa,
+% theta=100, s=1e4, inq=100 to see the effect of this.
 
-% theta = 100, s = 1e4, inq = 100, GISA DONE
-% theta = 100, s = 1e3, inq = 100, GISA runnign on my office computer
-% theta = 100, s = 1e5, inq = 100, GISA runnign once on my office computer
-% theta = 100, s = 1e4, inq = 10, GISA running
+% updated on 09052016
+% theta = 100, s = 1e4, inq = 100, GISA DONE 09042016
+% theta = 100, s = 1e3, inq = 100, GISA running on my office computer
+% theta = 100, s = 1e5, inq = 100, GISA skip
+% theta = 100, s = 1e4, inq = 10, GISA 
 % theta = 1, s = 1e4, inq = 100, GISA 
 % theta = 1, s = 1e4, inq = 100, Abernethy
-% theta = 100, s = 1e4, inq = 100, Abernethy
+% theta = 100, s = 1e4, inq = 100, Abernethy running on my office computer
 
 %%
 
@@ -175,7 +179,7 @@ parfor test = 1:TEST
                 u = bsxfun(@times, u, I); % label all positive signs with query numbers
                 for j = 1:length(unique_I)
                     temp_set(unique_I(j),:) = (weights'*(u==unique_I(j)))/...
-                        (weights'*(I==unique_I(j)));
+                        (weights'*(I==unique_I(j))+1e-99);
                 end
 
                 probability_query_pos = sum(bsxfun(@times,temp_set,probability_obj),1)';% probability of new query being positive
@@ -201,6 +205,7 @@ parfor test = 1:TEST
 
                 if isempty(options)
                     probability_obj_set(:,nq:end) = repmat(probability_obj,1,MAX_ITER-nq+1);
+                    expected_values(:,nq:end) = repmat(expected_value,1,MAX_ITER-nq+1);
                     partworths(XID,nq:end) = repmat(w0',1,MAX_ITER-nq+1);
                     nq = MAX_ITER+1;
                 else
@@ -215,6 +220,7 @@ parfor test = 1:TEST
 
                     probability_obj_set(:,nq) = probability_obj;
                     partworths(XID,nq) = w0';
+                    expected_values(:,nq) = expected_value;
                     nq = nq+1;
                     nquery = nquery - 1;
                 end
@@ -254,7 +260,7 @@ parfor test = 1:TEST
 end
 save(['gisa_s',num2str(s),'_inq',num2str(inq),'_n',num2str(MAX_ITER),...
     '_comp',num2str(num_competitor),'_theta',num2str(theta),...
-    '_nt',num2str(nt),'_08272016.mat'],...
+    '_nt',num2str(nt),'_09042016.mat'],...
     'prob_set','pairs_set','partworths_set','target_best_set','cond_set',...
     'expected_value_set','strategy_set','-v7.3');
 % save(['profit_s',num2str(s),'_inq',num2str(inq),...
