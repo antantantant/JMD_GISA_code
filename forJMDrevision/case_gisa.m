@@ -10,9 +10,9 @@
 % theta = 100, s = 1e4, inq = 100, GISA DONE 09042016
 % theta = 100, s = 1e3, inq = 100, GISA running on my office computer
 % theta = 100, s = 1e5, inq = 100, GISA skip
-% theta = 100, s = 1e4, inq = 10, GISA 
-% theta = 1, s = 1e4, inq = 100, GISA 
-% theta = 1, s = 1e4, inq = 100, Abernethy
+% theta = 100, s = 1e4, inq = 10, GISA running on doi3
+% theta = 1, s = 1e4, inq = 100, GISA running on doi3
+% theta = 1, s = 1e4, inq = 100, Abernethy 
 % theta = 100, s = 1e4, inq = 100, Abernethy running on my office computer
 
 %%
@@ -45,7 +45,7 @@ Dw = eye(30)*sigma; % randomness in user choices
 nt = size(Xf,1); % number of testing object
 % nt = 10;
 
-theta = 100;
+theta = 1;
 wtrue = w*theta;
 wtrue(1:5) = wtrue(1:5)-wtrue(5);
 wtrue(6:10) = wtrue(6:10)-wtrue(10);
