@@ -18,7 +18,7 @@
 %%
 
 
-parpool(4);
+% parpool(4);
 load('../basedata.mat');
 addpath('../../Tools/liblinear');
 
@@ -56,7 +56,7 @@ wtrue(26:30) = wtrue(26:30)-wtrue(30);
 
 num_competitor = 1;
 
-parfor test = 1:TEST
+for test = 1:TEST
     rng(test);
     fprintf('\n%%%%%%%% test number %d %%%%%%%%%%',test);
     
@@ -115,9 +115,10 @@ parfor test = 1:TEST
             conds(nq) = cond(Sigma_inv);
             
             [~,guess] = max(probability_obj);
+            [~,guess_expect] = max(expected_value);
             fprintf('iter: %d, truth: %d (%f), guess: %d, max value cand.: %d, corr: %0.2f, norm: %0.2f  \n',...
-                nq, target_best, probability_obj(target_best), guess,...
-                find(expected_value==max(expected_value)), corr(w0',wtrue(XID)'), norm(w0'-wtrue(XID)'));
+                nq, target_best, probability_obj(target_best), guess(1),...
+                guess_expect(1), corr(w0',wtrue(XID)'), norm(w0'-wtrue(XID)'));
             
             [~,sort_obj] = sort(probability_obj,'descend');
             sort_obj_nonzero = sort_obj(1:sum(probability_obj>0));
@@ -260,7 +261,7 @@ parfor test = 1:TEST
 end
 save(['gisa_s',num2str(s),'_inq',num2str(inq),'_n',num2str(MAX_ITER),...
     '_comp',num2str(num_competitor),'_theta',num2str(theta),...
-    '_nt',num2str(nt),'_09042016.mat'],...
+    '_nt',num2str(nt),'_09062016.mat'],...
     'prob_set','pairs_set','partworths_set','target_best_set','cond_set',...
     'expected_value_set','strategy_set','-v7.3');
 % save(['profit_s',num2str(s),'_inq',num2str(inq),...

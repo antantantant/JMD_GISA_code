@@ -59,7 +59,8 @@ function [w, best_C] = crossvalidation(X,y)
     cv_acc = zeros(numel(C),1);
     A = bsxfun(@times,X,y);
     for i=1:numel(C)
-        cv_acc(i) = train(sparse([ones(n,1);-ones(n,1)]), sparse([A;-A]), ...
+%         cv_acc(i) = train(sparse([ones(n,1);-ones(n,1)]), sparse([A;-A]), ...
+        cv_acc(i) = train(sparse(ones(n,1)), sparse(A), ...
         sprintf('-s 0 -e 1e-6 -q -c %f -v %d', C(i), folds));
     end
     
@@ -70,7 +71,8 @@ function [w, best_C] = crossvalidation(X,y)
     %# now you can train you model using best_C and best_gamma
     best_C = C(idx);
     
-    model = train(sparse([ones(n,1);-ones(n,1)]), sparse([A;-A]), ...
+%     model = train(sparse([ones(n,1);-ones(n,1)]), sparse([A;-A]), ...
+    model = train(sparse(ones(n,1)), sparse(A), ...
         sprintf('-s 0 -e 1e-6 -q -c %f', best_C));
     w = (model.w);
 %     w = ((A'*A+1/best_C*eye(size(A,2)))\A'*ones(size(A,1),1))';

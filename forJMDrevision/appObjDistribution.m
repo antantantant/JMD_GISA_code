@@ -16,7 +16,7 @@ function [f,W,I,unique_I,w0,C,weights,expected_value] = appObjDistribution(s,d,W
     best = best.*util;
     best(best==0) = -1e32;
     best = bsxfun(@eq, best, max(best,[],2));
-    f = (weights'*best/sum(weights))';
+    f = (weights'*best/(sum(weights)+1e-99))';
 
     % each line of best needs to have only one 1
     if any(sum(best,2)>1)
@@ -31,5 +31,9 @@ function [f,W,I,unique_I,w0,C,weights,expected_value] = appObjDistribution(s,d,W
     unique_I(unique_I>length(c))=[];
     
     % to calculate expected profit of each candidate
-    expected_value = weights'*exp(obj_app)/sum(weights);
+    expected_value = weights'*exp(obj_app)/(sum(weights)+1e-99);
+    
+    if (any(isnan(expected_value(:))) || any(isnan(f(:))))
+        stop
+    end
     

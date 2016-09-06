@@ -14,9 +14,18 @@ function [W,w0,C,weights] = sampling(s,d,A)
         Hessian = (eye(length(w0))/C+(As'*As));
         Sigma = inv(Hessian);
         % importance sampling
-        W = mvnrnd(w0,Sigma,s);
-        qW = mvnpdf(W, w0, Sigma)+1e-99;
+        W = mvnrnd(zeros(1,d),Sigma,s);
+        qW = log(mvnpdf(W, zeros(1,d), Sigma));
         dW = sum(W.^2,2);
-        pW = exp(-dW/2/C).*prod(1./(1+exp(-W*A')),2)+1e-99;
-        weights = pW./qW;
+        pW = -dW/2/C+sum(-log(1+exp(-W*A')),2);
+        weights = exp(pW-qW);
+%         temp = -W*A';
+%         temp2 = log(1+exp(temp));
+%         temp2(temp2==inf) = temp(temp2==inf);
+%         pW = -dW/2/C+sum(-temp2,2);
+%         weights = exp(pW-qW);
+        if sum(weights)==0
+            weights=ones(s,1);
+        end
+        weights = weights/sum(weights);
     end
