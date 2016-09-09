@@ -48,7 +48,7 @@ wtrue(26:30) = wtrue(26:30)-wtrue(30);
 num_competitor = 1;
 
 
-parfor test = 1:TEST
+for test = 1:TEST
     rng(test);
     fprintf('\n%%%%%%%% test number %d %%%%%%%%%%',test);
     
@@ -100,16 +100,18 @@ parfor test = 1:TEST
         obj_app = bsxfun(@plus,-log(1+exp(-util)),log(c(1:nt,:)));
 
         if nq>1
+            tic
             As = bsxfun(@times, A, sqrt(exp(A*w0'))./(1+exp(A*w0')));
             As(isnan(As))=0;
             Sigma_inv = (eye(length(XID))/C+(As'*As));
             conds(nq) = cond(Sigma_inv);
             
             [~,guess] = max(probability_obj);
+            [~,guess_expect] = max(expected_value);
             fprintf('iter: %d, truth: %d (%f), guess: %d, max value cand.: %d, corr: %0.2f, norm: %0.2f  \n',...
-                nq, target_best, probability_obj(target_best), guess,...
-                find(expected_value==max(expected_value)), corr(w0',wtrue(XID)'), norm(w0-wtrue(XID)));
-
+                nq, target_best, probability_obj(target_best), guess(1),...
+                guess_expect(1), corr(w0',wtrue(XID)'), norm(w0'-wtrue(XID)'));
+            
             B = (eye(size(w0,2))-w0'*w0/(w0*w0'))*Sigma_inv;
             [V,D] = eig(B);
             e = diag(D);
@@ -126,6 +128,8 @@ parfor test = 1:TEST
             id = unsampled(s2_id(s1_id(1)));
             [a1,a2] = find(dXID==id);
             options = [a1,a2];
+            toc
+            aaa=1;
         else
             options = randperm(nx,2); % random initial query
         end
@@ -162,7 +166,7 @@ parfor test = 1:TEST
     cond_set{test} = conds;
     expected_value_set{test} = expected_values;
 end
-save(['abernethy_s',num2str(s),'_n',num2str(MAX_ITER),...
-    '_comp',num2str(num_competitor),'_theta',num2str(theta),...
-    '_nt',num2str(nt),'_09042016.mat'],...
-    'pairs_set','prob_set','partworths_set','target_best_set','cond_set','expected_value_set','-v7.3');
+% save(['abernethy_s',num2str(s),'_n',num2str(MAX_ITER),...
+%     '_comp',num2str(num_competitor),'_theta',num2str(theta),...
+%     '_nt',num2str(nt),'_09042016.mat'],...
+%     'pairs_set','prob_set','partworths_set','target_best_set','cond_set','expected_value_set','-v7.3');

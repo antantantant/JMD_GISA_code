@@ -45,7 +45,7 @@ Dw = eye(30)*sigma; % randomness in user choices
 nt = size(Xf,1); % number of testing object
 % nt = 10;
 
-theta = 1;
+theta = 100;
 wtrue = w*theta;
 wtrue(1:5) = wtrue(1:5)-wtrue(5);
 wtrue(6:10) = wtrue(6:10)-wtrue(10);
@@ -98,6 +98,7 @@ for test = 1:TEST
         
     % find the next query
     while  nq<=MAX_ITER
+        tic
         % calculate A
         A = dX(DX(sub2ind(size(DX),pairs(1:nq-1,1),pairs(1:nq-1,2))),XID);
         A = bsxfun(@times,A,sign(pairs(1:nq-1,2)-pairs(1:nq-1,1)));
@@ -225,7 +226,8 @@ for test = 1:TEST
                     nq = nq+1;
                     nquery = nquery - 1;
                 end
-                
+                toc
+                aaa=1;
             else
                 probability_obj_set(:,nq:end) = repmat(probability_obj,1,MAX_ITER-nq+1);
                 expected_values(:,nq:end) = repmat(expected_value,1,MAX_ITER-nq+1);
@@ -259,11 +261,11 @@ for test = 1:TEST
     CC_set{test} = minCC;
     strategy_set{test} = strategy;
 end
-save(['gisa_s',num2str(s),'_inq',num2str(inq),'_n',num2str(MAX_ITER),...
-    '_comp',num2str(num_competitor),'_theta',num2str(theta),...
-    '_nt',num2str(nt),'_09062016.mat'],...
-    'prob_set','pairs_set','partworths_set','target_best_set','cond_set',...
-    'expected_value_set','strategy_set','-v7.3');
+% save(['gisa_s',num2str(s),'_inq',num2str(inq),'_n',num2str(MAX_ITER),...
+%     '_comp',num2str(num_competitor),'_theta',num2str(theta),...
+%     '_nt',num2str(nt),'_09062016.mat'],...
+%     'prob_set','pairs_set','partworths_set','target_best_set','cond_set',...
+%     'expected_value_set','strategy_set','-v7.3');
 % save(['profit_s',num2str(s),'_inq',num2str(inq),...
 %     '_n',num2str(MAX_ITER),'_comp',num2str(num_competitor),...
 %     '_theta',num2str(theta),'_0515.mat'],'prob_set','pairs_set',...

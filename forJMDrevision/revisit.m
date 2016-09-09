@@ -2,15 +2,16 @@
 
 % understand why under theta=1, when the part-worth estimate is close, we
 % still don't get the optimal design
-% head
+%% head
 load('../basedata.mat');
-% addpath('..\..\Tools\liblinear\matlab');
+addpath('../../Tools/liblinear/liblinear_weights');
+addpath('./mcmc');
 DX = dXID + dXID';
 TEST = 20;
 MAX_ITER = 1000;
 inq = 100;
-theta = 1;
-s = 1e3;
+theta = 100;
+s = 1e4;
 
 c = Xf(:,26:30)*price'-cv; %price - cost
 
@@ -30,9 +31,13 @@ num_competitor = 1;
 
 nt = size(Xf,1); % number of testing object
 
-load(['gisa_s',num2str(s),'_inq',num2str(inq),'_n',num2str(MAX_ITER),...
+% load(['gisa_s',num2str(s),'_inq',num2str(inq),'_n',num2str(MAX_ITER),...
+% '_comp',num2str(num_competitor),'_theta',num2str(theta),...
+% '_nt',num2str(nt),'_09042016.mat']);
+load(['abernethy_s',num2str(s),'_n',num2str(MAX_ITER),...
 '_comp',num2str(num_competitor),'_theta',num2str(theta),...
 '_nt',num2str(nt),'_09042016.mat']);
+
 
 W0 = mvnrnd(zeros(1,d),eye(length(w)),s);
 XID = 1:30; 
@@ -40,13 +45,13 @@ XID(5:5:30)=[];
 sigma = 1e-36;
 Dw = eye(30)*sigma; % randomness in user choices
 
-%%%%%%%%%%%%%%%%%%%%%% check the last query
+%% %%%%%%%%%%%%%%%%%%%%%% check the last query
 test = 1;
 nq = 1000;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-% Calculate true distribution under sigma
+%% Calculate true distribution under sigma
 Wtrue = wtrue*theta;
 util = (Wtrue*Xf(1:nt,:)');
 competitors = randperm(nt,num_competitor);
@@ -74,13 +79,13 @@ pairs = pairs_set{test};
 
 nquery = sum(sum(queryID>0));
 
-% calculate A
+%% calculate A
 A = dX(DX(sub2ind(size(DX),pairs(1:nq-1,1),pairs(1:nq-1,2))),XID);
 A = bsxfun(@times,A,sign(pairs(1:nq-1,2)-pairs(1:nq-1,1)));
 % [probability_obj,W,I,unique_I,w0,C,weights,expected_value] = ...
 %     appObjDistribution(s,length(XID),W0(:,XID),Xf(1:nt,XID),c(1:nt,:),A,competitors);
 
-s=1e4;
+s=1e3;
         d = length(XID);
 
         [W,w0,C,weights] = sampling(s,d,A);
@@ -129,11 +134,19 @@ B = (eye(size(A,2))-(w0'*w0)/(w0*w0'))*(eye(size(A,2))/C+(As'*As));
 conds(nq) = cond(Sigma_inv);
 
 
+[~,guess] = max(f);
+[~,guess_expect] = max(expected_value);
+fprintf('iter: %d, truth: %d (%f), guess: %d, max value cand.: %d, corr: %0.2f, norm: %0.2f  \n',...
+    nq, target_best, f(target_best), guess(1),...
+    guess_expect(1), corr(w0',wtrue(XID)'), norm(w0'-wtrue(XID)'));
+
+
+
 
 D = bsxfun(@minus, W, wtrue(XID));
 D = sqrt(sum(D.^2,2));
 
-maxV = 3;
+maxV = max(D);
 minV = min(D);
 bins = 20;
 vv = D;
